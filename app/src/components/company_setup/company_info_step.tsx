@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { TooltipTrigger, TooltipPopup, Tooltip } from "../ui/tooltip";
 import { InfoIcon } from "lucide-react";
-import type { FieldComponent } from "@tanstack/react-form";
+import type { FieldComponent, AnyFieldApi } from "@tanstack/react-form";
 
 interface CompanyInfoStepProps {
   form: {
@@ -31,7 +31,7 @@ export function CompanyInfoStep({
 
       <div className="flex flex-col gap-4 w-full max-w-md mx-auto">
         <form.Field name="companyName">
-          {(field: any) => (
+          {(field: AnyFieldApi) => (
             <div className="flex flex-col gap-2">
               <Label htmlFor="companyName">Company Name</Label>
               <Input
@@ -60,7 +60,7 @@ export function CompanyInfoStep({
         </form.Field>
 
         <form.Field name="companyIdentifier">
-          {(field: any) => (
+          {(field: AnyFieldApi) => (
             <div className="flex flex-col gap-2">
               <Label
                 htmlFor="companyIdentifier"

@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Field } from "@tanstack/react-form";
+import { Field, type AnyFieldApi } from "@tanstack/react-form";
 interface DecisionMakerStepProps {
   form: {
     Field: typeof Field;
@@ -29,7 +29,7 @@ export function DecisionMakerStep({
       <div className="space-y-4 max-w-md mx-auto">
         <div className="flex gap-2">
           <form.Field name="fullName">
-            {(field: any) => (
+            {(field: AnyFieldApi) => (
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
@@ -58,7 +58,7 @@ export function DecisionMakerStep({
           </form.Field>
 
           <form.Field name="email">
-            {(field: any) => (
+            {(field: AnyFieldApi) => (
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -89,7 +89,7 @@ export function DecisionMakerStep({
         </div>
 
         <form.Field name="password">
-          {(field: any) => (
+          {(field: AnyFieldApi) => (
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -119,7 +119,7 @@ export function DecisionMakerStep({
         </form.Field>
 
         <form.Field name="confirmPassword">
-          {(field: any) => (
+          {(field: AnyFieldApi) => (
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
