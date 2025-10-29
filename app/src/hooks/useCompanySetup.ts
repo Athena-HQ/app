@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import {
   companyInfoSchema,
   decisionMakerSchema,
@@ -40,7 +41,7 @@ export const useCompanySetup = () => {
 
       if (!result.success) {
         const fieldError = result.error.issues.find(
-          (error: any) => error.path[0] === fieldName
+          (error: z.ZodIssue) => error.path[0] === fieldName
         );
 
         if (fieldError) {
@@ -74,7 +75,7 @@ export const useCompanySetup = () => {
 
       if (!result.success) {
         const fieldError = result.error.issues.find(
-          (error: any) => error.path[0] === fieldName
+          (error: z.ZodIssue) => error.path[0] === fieldName
         );
 
         if (fieldError) {
@@ -110,7 +111,7 @@ export const useCompanySetup = () => {
 
       if (!result.success) {
         const newErrors: ValidationErrors = {};
-        result.error.issues.forEach((error: any) => {
+        result.error.issues.forEach((error: z.ZodIssue) => {
           const path = error.path[0] as string;
           newErrors[path] = error.message;
         });
@@ -132,7 +133,7 @@ export const useCompanySetup = () => {
 
       if (!result.success) {
         const newErrors: ValidationErrors = {};
-        result.error.issues.forEach((error: any) => {
+        result.error.issues.forEach((error: z.ZodIssue) => {
           const path = error.path[0] as string;
           newErrors[path] = error.message;
         });
