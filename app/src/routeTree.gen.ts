@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MainRouteRouteImport } from './routes/_main/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MainInviteRouteRouteImport } from './routes/_main/invite/route'
+import { Route as MainDashboardRouteRouteImport } from './routes/_main/dashboard/route'
 import { Route as AuthLoginRouteRouteImport } from './routes/_auth/login/route'
 import { Route as AuthJoinRouteRouteImport } from './routes/_auth/join/route'
 
+const MainRouteRoute = MainRouteRouteImport.update({
+  id: '/_main',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -25,9 +31,14 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MainInviteRouteRoute = MainInviteRouteRouteImport.update({
-  id: '/_main/invite',
+  id: '/invite',
   path: '/invite',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainDashboardRouteRoute = MainDashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => MainRouteRoute,
 } as any)
 const AuthLoginRouteRoute = AuthLoginRouteRouteImport.update({
   id: '/login',
@@ -44,44 +55,57 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/join': typeof AuthJoinRouteRoute
   '/login': typeof AuthLoginRouteRoute
+  '/dashboard': typeof MainDashboardRouteRoute
   '/invite': typeof MainInviteRouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/join': typeof AuthJoinRouteRoute
   '/login': typeof AuthLoginRouteRoute
+  '/dashboard': typeof MainDashboardRouteRoute
   '/invite': typeof MainInviteRouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
+  '/_main': typeof MainRouteRouteWithChildren
   '/_auth/join': typeof AuthJoinRouteRoute
   '/_auth/login': typeof AuthLoginRouteRoute
+  '/_main/dashboard': typeof MainDashboardRouteRoute
   '/_main/invite': typeof MainInviteRouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/join' | '/login' | '/invite'
+  fullPaths: '/' | '/join' | '/login' | '/dashboard' | '/invite'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/join' | '/login' | '/invite'
+  to: '/' | '/join' | '/login' | '/dashboard' | '/invite'
   id:
     | '__root__'
     | '/'
     | '/_auth'
+    | '/_main'
     | '/_auth/join'
     | '/_auth/login'
+    | '/_main/dashboard'
     | '/_main/invite'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  MainInviteRouteRoute: typeof MainInviteRouteRoute
+  MainRouteRoute: typeof MainRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_main': {
+      id: '/_main'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof MainRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -101,7 +125,14 @@ declare module '@tanstack/react-router' {
       path: '/invite'
       fullPath: '/invite'
       preLoaderRoute: typeof MainInviteRouteRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/dashboard': {
+      id: '/_main/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof MainDashboardRouteRouteImport
+      parentRoute: typeof MainRouteRoute
     }
     '/_auth/login': {
       id: '/_auth/login'
@@ -134,10 +165,24 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface MainRouteRouteChildren {
+  MainDashboardRouteRoute: typeof MainDashboardRouteRoute
+  MainInviteRouteRoute: typeof MainInviteRouteRoute
+}
+
+const MainRouteRouteChildren: MainRouteRouteChildren = {
+  MainDashboardRouteRoute: MainDashboardRouteRoute,
+  MainInviteRouteRoute: MainInviteRouteRoute,
+}
+
+const MainRouteRouteWithChildren = MainRouteRoute._addFileChildren(
+  MainRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
-  MainInviteRouteRoute: MainInviteRouteRoute,
+  MainRouteRoute: MainRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

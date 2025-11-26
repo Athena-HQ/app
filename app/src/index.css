@@ -6,7 +6,6 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-
 :root {
   --background: oklch(0.9895 0.0049 264.5358);
   --foreground: oklch(0.3083 0.0237 264.1381);
@@ -190,7 +189,6 @@ body {
     @apply h-full min-h-screen bg-background;
   }
 }
-
 
 * {
   scrollbar-width: none;

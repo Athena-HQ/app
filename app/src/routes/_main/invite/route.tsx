@@ -1,16 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { InviteForm } from "@/components/invitation/invite_form";
 import { PendingInvitations } from "@/components/invitation/pending_invitations";
 import { fadeInVariants } from "@/lib/animations-settings";
 
-
-export const Route = createFileRoute('/_main/invite')({
+export const Route = createFileRoute("/_main/invite")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-    return (
+  return (
     <div className="min-h-screen bg-background p-8">
       <motion.div
         variants={fadeInVariants}
