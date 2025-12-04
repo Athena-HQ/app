@@ -15,6 +15,7 @@ function RouteComponent() {
         </p>
       </div>
       <Wizard />
+      console.log("rendered");
     </div>
   );
 }
