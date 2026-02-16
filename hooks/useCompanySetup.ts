@@ -187,8 +187,8 @@ export const useCompanySetup = () => {
         setSubmitError(
           "Please verify your email address. Check your inbox for the verification link."
         );
-      } else if (response.signupSuccess && response.company) {
-        toast.success("Company created successfully!");
+      } else if (response.signupSuccess) {
+        toast.success("Account created successfully!");
         setIsSuccess(true);
       } else {
         setSubmitError("Failed to create company. Please try again.");

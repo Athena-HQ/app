@@ -1,4 +1,4 @@
-import { api, ApiError } from "@/lib/api/api-util";
+import { ApiError } from "@/lib/api/api-util";
 import { signup } from "./auth";
 
 export interface CreateCompanyRequest {
@@ -49,26 +49,10 @@ export const createCompany = async (
       last_name: lastName,
     });
 
-    const companyData = {
-      name: data.companyName,
-      phone_number: data.phone_number || "+1234567890",
-      country: data.country || "US",
-      city: data.city || "New York",
-      postal_code: data.postal_code || "10001",
-      domain: data.domain || "",
-      company_size: data.company_size || "2-10",
-    };
-
-    const company = await api.post<CreateCompanyResponse>(
-      "/company/",
-      companyData
-    );
-
     return {
       signupSuccess: true,
-      company,
       requiresVerification: false,
-      message: "Company created successfully",
+      message: "Account created successfully",
     };
   } catch (error) {
     if (error instanceof ApiError) {

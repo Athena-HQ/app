@@ -22,10 +22,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
+      const pathname =
+        typeof window !== "undefined" ? window.location.pathname : "";
+      const publicPrefixes = ["/login", "/join", "/onboarding", "/verify"];
+      const isPublicRoute = publicPrefixes.some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+      );
       queryClient.setQueryData(["auth", "user"], null);
-      queryClient.clear();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
+      if (!isPublicRoute) {
+        queryClient.clear();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
       }
     });
   }, [queryClient]);

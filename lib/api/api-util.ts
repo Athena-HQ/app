@@ -47,6 +47,40 @@ async function fetchWithTimeout(
   }
 }
 
+function normalizeErrorMessage(raw: unknown): string {
+  const fallback = "An error occurred";
+  if (raw === null || raw === undefined) {
+    return fallback;
+  }
+  if (typeof raw === "string") {
+    const match = raw.match(/string='([^']*)'/);
+    if (match?.[1]) return match[1];
+    return raw;
+  }
+  if (typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    if (
+      Array.isArray(obj.non_field_errors) &&
+      obj.non_field_errors.length > 0
+    ) {
+      const first = obj.non_field_errors[0];
+      return typeof first === "string" ? first : fallback;
+    }
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (
+        Array.isArray(val) &&
+        val.length > 0 &&
+        typeof val[0] === "string"
+      ) {
+        return val[0];
+      }
+    }
+    return fallback;
+  }
+  return fallback;
+}
+
 let onUnauthorized: (() => void) | null = null;
 
 export function setUnauthorizedHandler(handler: () => void) {
@@ -80,11 +114,9 @@ export async function apiRequest<T = unknown>(
       let errorMessage = "An error occurred";
       try {
         const errorData = await response.json();
-        errorMessage =
-          errorData.detail ||
-          errorData.message ||
-          errorData.details ||
-          errorMessage;
+        const raw =
+          errorData.detail ?? errorData.message ?? errorData.details;
+        errorMessage = normalizeErrorMessage(raw);
       } catch {
         errorMessage = response.statusText || errorMessage;
       }
