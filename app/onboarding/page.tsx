@@ -1,10 +1,13 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
+import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
+import { useAuth } from "@/contexts/auth-context";
 import { WelcomeScreen } from "@/components/onboarding/welcome-screen";
 import { ChecklistBoard } from "@/components/onboarding/checklist-board";
 import { FieldControl } from "@/components/onboarding/field-control";
@@ -17,8 +20,24 @@ import { useSearchParams } from "next/navigation";
 
 function OnboardingContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") || "";
-  
+  const router = useRouter();
+  const token = searchParams.get("token") || searchParams.get("key") || "";
+  const { user, isLoading: authLoading } = useAuth();
+  const {
+    checklist: apiChecklist,
+    rawChecklist,
+    isLoading: checklistLoading,
+    isError: checklistError,
+    completeItem,
+    isCompleting,
+  } = useOnboardingChecklist();
+
+  useEffect(() => {
+    if (token) {
+      router.replace(`/accept-invitation?key=${encodeURIComponent(token)}`);
+    }
+  }, [token, router]);
+
   const {
     inviteQuery,
     sharedFields,
@@ -35,15 +54,92 @@ function OnboardingContent() {
     updateField,
     updateSocialMediaField,
     handleSubmit,
-  } = useOnboardingFlow({ token });
+  } = useOnboardingFlow({ token: token || undefined });
 
-  if (!token) {
+  if (token) {
     return (
       <CenteredState
-        title="Invitation required"
-        description="Open this page from your email invite so we can load your onboarding kit."
-        actionLabel="Return to login"
+        title="Redirecting..."
+        description="Taking you to accept your invitation."
+      />
+    );
+  }
+
+  if (!user && !authLoading) {
+    return (
+      <CenteredState
+        title="Log in to view onboarding"
+        description="Sign in to see and complete your onboarding checklist."
+        actionLabel="Log in"
         actionHref="/login"
+      />
+    );
+  }
+
+  if (user && !inviteQuery.data && !apiChecklist && !checklistLoading) {
+    if (checklistError) {
+      return (
+        <CenteredState
+          title="No checklist yet"
+          description="Complete your account setup or ask your admin to assign an onboarding checklist."
+          actionLabel="Go to dashboard"
+          actionHref="/dashboard"
+        />
+      );
+    }
+    if (!checklistLoading) {
+      return (
+        <CenteredState
+          title="No checklist yet"
+          description="Your onboarding checklist will appear here once assigned."
+          actionLabel="Go to dashboard"
+          actionHref="/dashboard"
+        />
+      );
+    }
+  }
+
+  if (user && apiChecklist) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
+        <div className="w-full max-w-4xl flex flex-col gap-4">
+          <div className="flex flex-col gap-1 text-start w-full">
+            <p className="text-xs font-medium text-muted-foreground">
+              Your onboarding
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Checklist
+            </h1>
+          </div>
+          <ChecklistBoard
+            checklist={apiChecklist}
+            onComplete={
+              rawChecklist
+                ? (stepId) => {
+                    const item = rawChecklist.items.find(
+                      (i) => String(i.id) === stepId
+                    );
+                    if (item && !item.is_completed) {
+                      completeItem(item.id);
+                    }
+                  }
+                : undefined
+            }
+            isCompleting={isCompleting}
+          />
+          <Button asChild>
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (authLoading || (user && checklistLoading)) {
+    return (
+      <CenteredState
+        title="Loading"
+        description="Loading your onboarding..."
       />
     );
   }

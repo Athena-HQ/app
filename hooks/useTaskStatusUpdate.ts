@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { taskService, type Task, type TaskStatus } from "@/services/task";
+import { taskService, type TaskListResponse, type TaskResponse, type TaskStatus } from "@/services/task";
 import { toast } from "sonner";
 
 export function useTaskStatusUpdate() {
@@ -12,23 +12,22 @@ export function useTaskStatusUpdate() {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
       await queryClient.cancelQueries({ queryKey: ["task", taskId] });
 
-      const previousTasks = queryClient.getQueryData<Task[]>(["tasks"]);
-      const previousTask = queryClient.getQueryData<Task>(["task", taskId]);
+      const previousTasks = queryClient.getQueryData<TaskListResponse[]>(["tasks"]);
+      const previousTask = queryClient.getQueryData<TaskResponse>(["task", taskId]);
 
       if (previousTasks) {
-        queryClient.setQueryData<Task[]>(
+        queryClient.setQueryData<TaskListResponse[]>(
           ["tasks"],
           previousTasks.map((task) =>
-            task.id === taskId ? { ...task, status, updatedAt: new Date() } : task
+            String(task.id) === taskId ? { ...task, status } : task
           )
         );
       }
 
       if (previousTask) {
-        queryClient.setQueryData<Task>(["task", taskId], {
+        queryClient.setQueryData<TaskResponse>(["task", taskId], {
           ...previousTask,
           status,
-          updatedAt: new Date(),
         });
       }
 

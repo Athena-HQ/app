@@ -1,48 +1,27 @@
 import { Card } from "@/components/ui/card";
 import { TaskStatusBadge } from "./task_status_badge";
 import { Badge } from "@/components/ui/badge";
-import type { Task } from "@/services/task";
-import { getUserById } from "@/services/hierarchy";
+import type { TaskListResponse, TaskPriority } from "@/services/task";
 import Link from "next/link";
-function formatDistanceToNow(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  let result = "";
-  if (diffMins < 1) {
-    result = "just now";
-  } else if (diffMins < 60) {
-    result = `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
-  } else if (diffHours < 24) {
-    result = `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-  } else if (diffDays < 30) {
-    result = `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-  } else {
-    result = date.toLocaleDateString();
-  }
-
-  return result;
-}
 import { cn } from "@/lib/utils";
 
 type TaskCardProps = {
-  task: Task;
+  task: TaskListResponse;
 };
 
-const priorityColors: Record<Task["priority"], string> = {
+const priorityColors: Record<TaskPriority, string> = {
   low: "bg-blue-500/10 text-blue-500",
   medium: "bg-yellow-500/10 text-yellow-500",
   high: "bg-orange-500/10 text-orange-500",
-  urgent: "bg-red-500/10 text-red-500",
+  critical: "bg-red-500/10 text-red-500",
 };
 
 export function TaskCard({ task }: TaskCardProps) {
-  const assignee = getUserById(task.assigneeId);
-  const assigner = getUserById(task.assignerId);
-  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "completed" && task.status !== "reviewed";
+  const isOverdue =
+    task.due_date &&
+    new Date(task.due_date) < new Date() &&
+    task.status !== "completed" &&
+    task.status !== "under_review";
 
   return (
     <Link href={`/tasks/${task.id}`}>
@@ -53,23 +32,29 @@ export function TaskCard({ task }: TaskCardProps) {
               <h3 className="font-semibold text-sm truncate">{task.title}</h3>
               <TaskStatusBadge status={task.status} />
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{task.description}</p>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap mb-3">
               <Badge className={cn("text-xs", priorityColors[task.priority])}>
                 {task.priority}
               </Badge>
               <span className="text-xs text-muted-foreground">{task.category}</span>
-              <span className="text-xs text-muted-foreground">{task.type}</span>
-              {task.dueDate && (
-                <span className={cn("text-xs", isOverdue && "text-destructive font-medium")}>
-                  Due: {new Date(task.dueDate).toLocaleDateString()}
+              {task.due_date && (
+                <span
+                  className={cn(
+                    "text-xs",
+                    isOverdue && "text-destructive font-medium"
+                  )}
+                >
+                  Due: {new Date(task.due_date).toLocaleDateString()}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              {assignee && <span>Assignee: {assignee.name}</span>}
-              {assigner && <span>Assigned by: {assigner.name}</span>}
-              <span>Updated {formatDistanceToNow(task.updatedAt)}</span>
+              {task.assigned_to_name && (
+                <span>Assignee: {task.assigned_to_name}</span>
+              )}
+              {task.assigned_by_name && (
+                <span>Assigned by: {task.assigned_by_name}</span>
+              )}
             </div>
           </div>
         </div>

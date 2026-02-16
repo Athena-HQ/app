@@ -26,8 +26,10 @@ import {
   RiGroupLine,
 } from "@remixicon/react";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 
 // This is sample data.
 const data = {
@@ -117,8 +119,19 @@ const data = {
   ],
 };
 
+const managementItems = [
+  { title: "Invite Employees", url: "/invite", icon: RiMailLine, inviteOnly: true },
+  { title: "Squads", url: "/squads", icon: RiGroupLine, inviteOnly: false },
+];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuth();
+  const { canInviteEmployees } = useCurrentUserRole();
+  const filteredManagementItems = managementItems.filter(
+    (item) => !item.inviteOnly || canInviteEmployees
+  );
   return (
     <Sidebar {...props}>
       <SidebarHeader className="flex flex-row items-center gap-2">
@@ -140,22 +153,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupLabel>
             <SidebarGroupContent className="px-2">
               <SidebarMenu>
-                {item.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
+                {(item.title === "Management"
+                  ? filteredManagementItems
+                  : item.items
+                ).map((navItem) => (
+                  <SidebarMenuItem key={navItem.title}>
                     <SidebarMenuButton
                       asChild
                       className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
-                      isActive={pathname === item.url}
+                      isActive={pathname === navItem.url}
                     >
-                      <Link href={item.url}>
-                        {item.icon && (
-                          <item.icon
+                      <Link href={navItem.url}>
+                        {navItem.icon && (
+                          <navItem.icon
                             className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
                             size={22}
                             aria-hidden="true"
                           />
                         )}
-                        <span>{item.title}</span>
+                        <span>{navItem.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -169,7 +185,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <hr className="border-t border-border mx-2 -mt-px" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto">
+            <SidebarMenuButton
+              className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+              onClick={() => {
+                logout()
+                  .then(() => router.push("/login"))
+                  .catch(() => {});
+              }}
+            >
               <RiLogoutBoxLine
                 className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
                 size={22}

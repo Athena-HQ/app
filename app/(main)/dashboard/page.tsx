@@ -52,10 +52,10 @@ export default function DashboardPage() {
 
       <div className="flex  w-full *:w-full gap-2">
         <TaskStatCards
-          inProgress={stats.inProgressTasks.length}
-          todo={stats.todoTasks.length}
-          done={stats.doneTasks.length}
-          onHold={stats.onHoldTasks.length}
+          inProgress={stats.widgetCounts.inProgress}
+          todo={stats.widgetCounts.todo}
+          done={stats.widgetCounts.done}
+          onHold={stats.widgetCounts.onHold}
         />
       </div>
     </motion.div>

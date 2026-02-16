@@ -14,6 +14,7 @@ import { PlusIcon } from "lucide-react";
 
 export default function TasksPage() {
   const currentUser = getCurrentUser();
+  const currentUserId = parseInt(currentUser.id, 10);
   const [view, setView] = useState<
     "assigned_to_me" | "assigned_by_me" | "all" | "needs_review"
   >("all");
@@ -21,19 +22,23 @@ export default function TasksPage() {
 
   const taskFilters: TaskFilters = {
     ...filters,
-    ...(view === "assigned_to_me" ? { assigneeId: currentUser.id } : {}),
-    ...(view === "assigned_by_me" ? { assignerId: currentUser.id } : {}),
+    ...(view === "assigned_to_me" ? { assigned_to: currentUserId } : {}),
+    ...(view === "assigned_by_me" ? { assigned_by: currentUserId } : {}),
     ...(view === "needs_review"
-      ? { status: "completed", assignerId: currentUser.id }
+      ? { status: "completed", assigned_by: currentUserId }
       : {}),
   };
 
   const { data: tasks = [], isLoading } = useTasks(taskFilters);
-  const { data: allTasksForReview = [] } = useTasks({});
+  const { data: needsReviewTasks = [] } = useTasks({
+    status: "completed",
+    assigned_by: Number.isNaN(currentUserId) ? undefined : currentUserId,
+  });
 
-  const needsReviewCount = allTasksForReview.filter(
-    (t) => t.status === "completed" && t.assignerId === currentUser.id
-  ).length;
+  const needsReviewCount = needsReviewTasks.length;
+  const needsReviewIds = new Set(
+    needsReviewTasks.map((t) => String(t.id))
+  );
 
   return (
     <motion.div
@@ -90,7 +95,7 @@ export default function TasksPage() {
 
       <TaskFiltersComponent filters={filters} onFiltersChange={setFilters} />
 
-      <TaskTable tasks={tasks} isLoading={isLoading} />
+      <TaskTable tasks={tasks} isLoading={isLoading} needsReviewIds={needsReviewIds} />
     </motion.div>
   );
 }

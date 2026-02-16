@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TASK_PRIORITIES, TASK_CATEGORIES, TASK_TYPES, TASK_STATUSES, type TaskPriority, type TaskCategory, type TaskType, type TaskStatus } from "@/services/task";
+import { TASK_PRIORITIES, TASK_CATEGORIES, TASK_STATUSES, type TaskPriority, type TaskCategory, type TaskStatus } from "@/services/task";
 
 export const taskFormSchema = z.object({
   title: z
@@ -16,9 +16,6 @@ export const taskFormSchema = z.object({
   }),
   category: z.enum(TASK_CATEGORIES as [TaskCategory, ...TaskCategory[]], {
     message: "Please select a category",
-  }),
-  type: z.enum(TASK_TYPES as [TaskType, ...TaskType[]], {
-    message: "Please select a type",
   }),
   dueDate: z.string().optional(),
 });

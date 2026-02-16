@@ -4,18 +4,37 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   invitationService,
+  invitationResponseToInvitation,
   type InvitationFormData,
   type Invitation,
   type InvitationStatus,
-  type TeamRole,
+  type InvitationRole,
 } from "@/services/invitation";
+import { getCompanies } from "@/services/company";
 import { invitationFormSchema } from "@/lib/validations/invitation";
+import type { QueryClient } from "@tanstack/react-query";
 
-export const useInvitations = () => {
-  const { data: invitations = [], isLoading } = useQuery({
+async function resolveCompanyId(queryClient: QueryClient): Promise<number> {
+  const invitations = await queryClient.fetchQuery({
     queryKey: ["invitations"],
     queryFn: () => invitationService.getInvitations(),
   });
+  const fromInvitation = invitations[0]?.company;
+  if (fromInvitation != null) return fromInvitation;
+  const companies = await getCompanies();
+  const firstCompany = companies[0];
+  if (firstCompany == null) {
+    throw new Error("Company not found. Please complete company setup first.");
+  }
+  return firstCompany.id;
+}
+
+export const useInvitations = () => {
+  const { data: raw = [], isLoading } = useQuery({
+    queryKey: ["invitations"],
+    queryFn: () => invitationService.getInvitations(),
+  });
+  const invitations = raw.map(invitationResponseToInvitation);
 
   return { invitations, isLoading };
 };
@@ -24,8 +43,10 @@ export const useInvitationForm = () => {
   const queryClient = useQueryClient();
 
   const sendInvitationMutation = useMutation({
-    mutationFn: (data: InvitationFormData) =>
-      invitationService.sendInvitation(data),
+    mutationFn: async (data: InvitationFormData) => {
+      const companyId = await resolveCompanyId(queryClient);
+      return invitationService.sendInvitation(data, companyId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast.success("Invitation sent successfully");
@@ -38,7 +59,7 @@ export const useInvitationForm = () => {
   const form = useForm({
     defaultValues: {
       email: "",
-      role: "" as TeamRole,
+      role: "" as InvitationRole,
     },
     onSubmit: async ({ value }) => {
       const result = invitationFormSchema.safeParse(value);
@@ -79,8 +100,10 @@ export const useInvitationActions = () => {
   });
 
   const bulkInviteMutation = useMutation({
-    mutationFn: (invitations: InvitationFormData[]) =>
-      invitationService.bulkInvite(invitations),
+    mutationFn: async (invitations: InvitationFormData[]) => {
+      const companyId = await resolveCompanyId(queryClient);
+      return invitationService.bulkInvite(invitations, companyId);
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast.success(`${data.length} invitations sent successfully`);
@@ -102,7 +125,7 @@ export const useInvitationActions = () => {
 
 export const useInvitationFilters = (invitations: Invitation[]) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<TeamRole | "all">("all");
+  const [roleFilter, setRoleFilter] = useState<InvitationRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<InvitationStatus | "all">(
     "all"
   );

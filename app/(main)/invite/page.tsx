@@ -1,11 +1,35 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { InviteForm } from "@/components/invitation/invite_form";
 import { PendingInvitations } from "@/components/invitation/pending_invitations";
 import { fadeInVariants } from "@/lib/animations-settings";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 
 export default function InvitePage() {
+  const router = useRouter();
+  const { canInviteEmployees, isLoading } = useCurrentUserRole();
+
+  useEffect(() => {
+    if (!isLoading && !canInviteEmployees) {
+      router.replace("/dashboard");
+    }
+  }, [canInviteEmployees, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!canInviteEmployees) {
+    return null;
+  }
+
   return (
     <motion.div
       variants={fadeInVariants}

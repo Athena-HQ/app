@@ -14,7 +14,7 @@ import { DatePicker } from "@/components/ui/date_picker";
 import { FieldInfo } from "@/components/field_info";
 import { useTaskForm } from "@/hooks/useTaskForm";
 import { getSubordinates, getCurrentUser } from "@/services/hierarchy";
-import { TASK_PRIORITIES, TASK_CATEGORIES, TASK_TYPES, type TaskPriority, type TaskCategory, type TaskType } from "@/services/task";
+import { TASK_PRIORITIES, TASK_CATEGORIES, type TaskPriority, type TaskCategory } from "@/services/task";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
@@ -31,22 +31,16 @@ const priorityLabels: Record<string, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
-  urgent: "Urgent",
+  critical: "Critical",
 };
 
 const categoryLabels: Record<string, string> = {
-  development: "Development",
-  design: "Design",
-  qa: "QA",
-  marketing: "Marketing",
-  other: "Other",
-};
-
-const typeLabels: Record<string, string> = {
-  bug: "Bug",
   feature: "Feature",
+  bug: "Bug",
   improvement: "Improvement",
-  task: "Task",
+  documentation: "Documentation",
+  research: "Research",
+  testing: "Testing",
   other: "Other",
 };
 
@@ -183,7 +177,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
           <Separator />
 
           <FormSection icon={Tag} title="Classification">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <form.Field name="priority">
                 {(field) => (
                   <FormField icon={Flag} label="Priority" field={field}>
@@ -220,28 +214,6 @@ export function TaskForm({ taskId }: TaskFormProps) {
                         {TASK_CATEGORIES.map((category) => (
                           <SelectItem key={category} value={category}>
                             {categoryLabels[category]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormField>
-                )}
-              </form.Field>
-
-              <form.Field name="type">
-                {(field) => (
-                  <FormField icon={Tag} label="Type" field={field}>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(value: string) => field.handleChange(value as TaskType)}
-                    >
-                      <SelectTrigger id={field.name} className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TASK_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {typeLabels[type]}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -11,7 +11,8 @@ const statusConfig: Record<TaskStatus, { label: string; variant: "default" | "se
   assigned: { label: "Assigned", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "default" },
   completed: { label: "Completed", variant: "success" },
-  reviewed: { label: "Reviewed", variant: "success" },
+  under_review: { label: "Under Review", variant: "warning" },
+  on_hold: { label: "On Hold", variant: "secondary" },
 };
 
 export function TaskStatusBadge({ status, className }: TaskStatusBadgeProps) {

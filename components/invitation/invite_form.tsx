@@ -12,7 +12,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { FieldInfo } from "@/components/field_info";
 import { useInvitationForm } from "@/hooks/useInvitation";
-import { TEAM_ROLES, type TeamRole } from "@/services/invitation";
+import { INVITATION_ROLES, type InvitationRole } from "@/services/invitation";
 import { FileUpIcon } from "lucide-react";
 import { fadeInUpVariants } from "@/lib/animations-settings";
 
@@ -89,7 +89,7 @@ export function InviteForm() {
                   <Label htmlFor={field.name}>Role</Label>
                   <Select
                     value={field.state.value}
-                    onValueChange={(value: string) => field.handleChange(value as TeamRole)}
+                    onValueChange={(value: string) => field.handleChange(value as InvitationRole)}
                   >
                     <SelectTrigger
                       id={field.name}
@@ -102,7 +102,7 @@ export function InviteForm() {
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {TEAM_ROLES.map((role) => (
+                      {INVITATION_ROLES.map((role) => (
                         <SelectItem key={role} value={role}>
                           {role}
                         </SelectItem>

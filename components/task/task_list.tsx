@@ -1,9 +1,9 @@
 import { TaskCard } from "./task_card";
-import type { Task } from "@/services/task";
+import type { TaskListResponse } from "@/services/task";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type TaskListProps = {
-  tasks: Task[];
+  tasks: TaskListResponse[];
   isLoading?: boolean;
 };
 

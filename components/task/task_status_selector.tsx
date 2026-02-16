@@ -17,7 +17,8 @@ const statusLabels: Record<TaskStatus, string> = {
   assigned: "Assigned",
   in_progress: "In Progress",
   completed: "Completed",
-  reviewed: "Reviewed",
+  under_review: "Under Review",
+  on_hold: "On Hold",
 };
 
 export function TaskStatusSelector({ value, onValueChange, disabled }: TaskStatusSelectorProps) {

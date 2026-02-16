@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,8 @@ import {
   useInvitationActions,
   useInvitationFilters,
 } from "@/hooks/useInvitation";
-import type { TeamRole, InvitationStatus } from "@/services/invitation";
+import type { InvitationRole, InvitationStatus } from "@/services/invitation";
+import { INVITATION_ROLES } from "@/services/invitation";
 import {
   SearchIcon,
   MoreHorizontalIcon,
@@ -33,11 +33,12 @@ import { fadeInUpVariants } from "@/lib/animations-settings";
 
 const statusConfig: Record<
   InvitationStatus,
-  { label: string; variant: "success" | "warning" | "secondary" }
+  { label: string; variant: "success" | "warning" | "secondary" | "destructive" }
 > = {
-  sent: { label: "Sent", variant: "success" },
+  pending: { label: "Pending", variant: "success" },
   expired: { label: "Expired", variant: "warning" },
   accepted: { label: "Accepted", variant: "secondary" },
+  cancelled: { label: "Cancelled", variant: "destructive" },
 };
 
 export function PendingInvitations() {
@@ -82,7 +83,7 @@ export function PendingInvitations() {
 
           <Select
             value={roleFilter}
-            onValueChange={(value: string) => setRoleFilter(value as TeamRole | "all")}
+            onValueChange={(value: string) => setRoleFilter(value as InvitationRole | "all")}
           >
             <SelectTrigger className=" min-w-28 flex-0">
               <SelectValue>
@@ -91,16 +92,11 @@ export function PendingInvitations() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="Product Manager">Product Manager</SelectItem>
-              <SelectItem value="UX/UI Designer">UX/UI Designer</SelectItem>
-              <SelectItem value="Software Engineer">
-                Software Engineer
-              </SelectItem>
-              <SelectItem value="Data Analyst">Data Analyst</SelectItem>
-              <SelectItem value="Marketing Specialist">
-                Marketing Specialist
-              </SelectItem>
-              <SelectItem value="Sales Manager">Sales Manager</SelectItem>
+              {INVITATION_ROLES.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -117,9 +113,10 @@ export function PendingInvitations() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="expired">Expired</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -138,13 +135,9 @@ export function PendingInvitations() {
                 transition={{ delay: index * 0.05 }}
                 className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
               >
-                <Image
-                  src={invitation.avatar || "/athena.avif"}
-                  alt={invitation.email}
-                  width={40}
-                  height={40}
-                  className="w-10 h-10 rounded-full"
-                />
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
+                  {(invitation.email[0] ?? "?").toUpperCase()}
+                </div>
 
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{invitation.email}</p>
@@ -164,7 +157,7 @@ export function PendingInvitations() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {invitation.status !== "accepted" && (
+                    {invitation.status === "pending" && (
                       <DropdownMenuItem
                         onClick={() => resendInvitation(invitation.id)}
                       >

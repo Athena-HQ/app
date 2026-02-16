@@ -1,4 +1,52 @@
+import { api } from "@/lib/api/api-util";
 import type { Task } from "./task";
+
+export interface DashboardStatsResponse {
+  to_do: number;
+  in_progress: number;
+  under_review: number;
+  done: number;
+  on_hold: number;
+  total: number;
+}
+
+export interface DashboardPerformanceItem {
+  month: string;
+  count: number;
+}
+
+export async function getDashboardStats(
+  scope: "personal" | "company" = "personal",
+  userId?: number
+): Promise<DashboardStatsResponse> {
+  const params = new URLSearchParams({ scope });
+  if (userId != null) params.set("user_id", String(userId));
+  const qs = params.toString();
+  const path = qs ? `/dashboard/stats/?${qs}` : "/dashboard/stats/?scope=personal";
+  const response = await api.get<DashboardStatsResponse>(path);
+  return response;
+}
+
+export async function getDashboardPerformance(
+  scope: "personal" | "company" = "personal",
+  userId?: number,
+  months: 3 | 6 | 12 = 6
+): Promise<DashboardPerformanceItem[]> {
+  const params = new URLSearchParams({ scope, months: String(months) });
+  if (userId != null) params.set("user_id", String(userId));
+  const path = `/dashboard/performance/?${params.toString()}`;
+  const response = await api.get<DashboardPerformanceItem[]>(path);
+  return Array.isArray(response) ? response : [];
+}
+
+export function performanceToCompletionData(
+  items: DashboardPerformanceItem[]
+): TaskCompletionData[] {
+  return items.map((item) => ({
+    date: item.month,
+    count: item.count,
+  }));
+}
 
 export interface Badge {
   id: string;
@@ -33,7 +81,7 @@ export interface TaskCompletionData {
 
 function calculateXPFromTasks(tasks: Task[]): number {
   const completedTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "reviewed"
+    (t) => t.status === "completed" || t.status === "under_review"
   );
 
   let xp = 0;
@@ -43,13 +91,15 @@ function calculateXPFromTasks(tasks: Task[]): number {
       low: 1,
       medium: 1.5,
       high: 2,
-      urgent: 2.5,
+      critical: 2.5,
     };
     const categoryMultiplier: Record<string, number> = {
-      development: 1.2,
-      design: 1.1,
-      qa: 1,
-      marketing: 1,
+      feature: 1.2,
+      bug: 1.1,
+      improvement: 1.1,
+      documentation: 1,
+      research: 1,
+      testing: 1,
       other: 1,
     };
 
@@ -87,7 +137,7 @@ function calculateLevel(xp: number): { level: number; xpToNextLevel: number; tot
 function generateBadges(tasks: Task[]): Badge[] {
   const badges: Badge[] = [];
   const completedCount = tasks.filter(
-    (t) => t.status === "completed" || t.status === "reviewed"
+    (t) => t.status === "completed" || t.status === "under_review"
   ).length;
 
   if (completedCount >= 10) {
@@ -137,7 +187,9 @@ function generateBadges(tasks: Task[]): Badge[] {
   }
 
   const highPriorityTasks = tasks.filter(
-    (t) => (t.status === "completed" || t.status === "reviewed") && t.priority === "high"
+    (t) =>
+      (t.status === "completed" || t.status === "under_review") &&
+      (t.priority === "high" || t.priority === "critical")
   ).length;
   if (highPriorityTasks >= 20) {
     badges.push({
@@ -154,7 +206,7 @@ function generateBadges(tasks: Task[]): Badge[] {
 
 function generateAchievements(tasks: Task[]): Achievement[] {
   const completedCount = tasks.filter(
-    (t) => t.status === "completed" || t.status === "reviewed"
+    (t) => t.status === "completed" || t.status === "under_review"
   ).length;
 
   return [
@@ -190,7 +242,7 @@ function generateTaskCompletionData(
   months: number
 ): TaskCompletionData[] {
   const completedTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "reviewed"
+    (t) => t.status === "completed" || t.status === "under_review"
   );
 
   const endDate = new Date();

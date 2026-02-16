@@ -4,100 +4,47 @@ import { useState } from "react";
 import Link from "next/link";
 import { Search, Plus, Filter, MoreHorizontal, Users } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { listSquads, type SquadListResponse } from "@/services/squad";
 
-export const MOCK_SQUADS = [
-  {
-    id: "1",
-    name: "Alpha Mobile Team",
-    description:
-      "Building the next gen iOS and Android application for the main product.",
-    leader: {
-      name: "Sarah Connor",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces",
-    },
-    members: 8,
-    maxMembers: 12,
-    status: "active",
-    progress: 65,
-    techStack: ["React Native", "TypeScript", "Node.js"],
-    createdAt: "2 days ago",
-  },
-  {
-    id: "2",
-    name: "Data Analytics Core",
-    description:
-      "Revamping the data pipeline and analytics dashboard infrastructure.",
-    leader: {
-      name: "John Wick",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop&crop=faces",
-    },
-    members: 4,
-    maxMembers: 6,
-    status: "recruiting",
-    progress: 20,
-    techStack: ["Python", "AWS", "Snowflake"],
-    createdAt: "5 days ago",
-  },
-  {
-    id: "3",
-    name: "Design System Squad",
-    description: "Standardizing UI components across all web properties.",
-    leader: {
-      name: "Ellen Ripley",
-      avatar:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=faces",
-    },
-    members: 3,
-    maxMembers: 5,
-    status: "active",
-    progress: 45,
-    techStack: ["Figma", "React", "Storybook"],
-    createdAt: "1 week ago",
-  },
-  {
-    id: "4",
-    name: "Marketing Website",
-    description:
-      "Redesigning the public facing marketing website for Q4 launch.",
-    leader: {
-      name: "Tony Stark",
-      avatar:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=faces",
-    },
-    members: 6,
-    maxMembers: 6,
-    status: "completed",
-    progress: 100,
-    techStack: ["Next.js", "Tailwind", "Vercel"],
-    createdAt: "2 weeks ago",
-  },
-];
+function filterSquads(
+  squads: SquadListResponse[],
+  searchQuery: string,
+  statusFilter: string | null
+) {
+  return squads.filter((squad) => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch =
+      squad.name.toLowerCase().includes(searchLower) ||
+      (squad.project_name ?? "").toLowerCase().includes(searchLower) ||
+      (squad.stack ?? "").toLowerCase().includes(searchLower);
+    const status = squad.is_active ? "active" : "inactive";
+    const matchesStatus = statusFilter ? status === statusFilter : true;
+    return matchesSearch && matchesStatus;
+  });
+}
 
 export default function SquadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
-  const filteredSquads = MOCK_SQUADS.filter((squad) => {
-    const matchesSearch =
-      squad.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      squad.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter ? squad.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+  const { data: squads = [], isLoading } = useQuery({
+    queryKey: ["squads"],
+    queryFn: listSquads,
   });
+
+  const filteredSquads = filterSquads(squads, searchQuery, statusFilter);
 
   return (
     <div className="min-h-screen pb-24 bg-transparent animate-in fade-in duration-500">
@@ -157,28 +104,16 @@ export default function SquadsPage() {
               Active
             </Button>
             <Button
-              variant={statusFilter === "recruiting" ? "secondary" : "ghost"}
+              variant={statusFilter === "inactive" ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setStatusFilter("recruiting")}
+              onClick={() => setStatusFilter("inactive")}
               className={
-                statusFilter === "recruiting"
-                  ? "bg-background shadow-sm border border-border font-medium text-accent-foreground"
+                statusFilter === "inactive"
+                  ? "bg-background shadow-sm border border-border font-medium text-muted-foreground"
                   : "text-muted-foreground"
               }
             >
-              Recruiting
-            </Button>
-            <Button
-              variant={statusFilter === "completed" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter("completed")}
-              className={
-                statusFilter === "completed"
-                  ? "bg-background shadow-sm border border-border font-medium text-blue-600 dark:text-blue-400"
-                  : "text-muted-foreground"
-              }
-            >
-              Completed
+              Inactive
             </Button>
           </div>
 
@@ -191,8 +126,17 @@ export default function SquadsPage() {
           </Button>
         </div>
 
+        {isLoading ? (
+          <div className="text-muted-foreground py-8">Loading squads...</div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSquads.map((squad, index) => (
+          {filteredSquads.map((squad, index) => {
+            const status = squad.is_active ? "active" : "inactive";
+            const techStack = squad.stack
+              ? squad.stack.split(",").map((s) => s.trim()).filter(Boolean)
+              : [];
+            const leaderName = squad.leader_name ?? "—";
+            return (
             <Link
               key={squad.id}
               href={`/squads/${squad.id}/edit`}
@@ -215,26 +159,13 @@ export default function SquadsPage() {
                     <div className="flex justify-between items-start mb-2">
                       <Badge
                         variant="outline"
-                        className={`
-                          border-0 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold
-                          ${
-                            squad.status === "active"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : ""
-                          }
-                          ${
-                            squad.status === "recruiting"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                              : ""
-                          }
-                          ${
-                            squad.status === "completed"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                              : ""
-                          }
-                        `}
+                        className={
+                          status === "active"
+                            ? "border-0 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "border-0 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold bg-muted text-muted-foreground"
+                        }
                       >
-                        {squad.status}
+                        {status}
                       </Badge>
                       <Button
                         variant="ghost"
@@ -253,13 +184,13 @@ export default function SquadsPage() {
                       {squad.name}
                     </h3>
                     <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                      {squad.description}
+                      {squad.project_name || "—"}
                     </p>
                   </CardHeader>
 
                   <CardContent className="pb-3 space-y-4 relative z-10">
                     <div className="flex flex-wrap gap-1.5">
-                      {squad.techStack.slice(0, 3).map((tech) => (
+                      {techStack.slice(0, 3).map((tech) => (
                         <span
                           key={tech}
                           className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground/80 border border-border/50 group-hover:border-accent/30 transition-colors"
@@ -267,56 +198,39 @@ export default function SquadsPage() {
                           {tech}
                         </span>
                       ))}
-                      {squad.techStack.length > 3 && (
+                      {techStack.length > 3 && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground/80 border border-border/50">
-                          +{squad.techStack.length - 3}
+                          +{techStack.length - 3}
                         </span>
                       )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-foreground/70 font-medium">
-                          Progress
-                        </span>
-                        <span className="font-bold text-foreground">
-                          {squad.progress}%
-                        </span>
-                      </div>
-                      <Progress
-                        value={squad.progress}
-                        className="h-1.5 bg-muted"
-                      />
                     </div>
                   </CardContent>
 
                   <CardFooter className="pt-3 border-t border-border/40 flex justify-between items-center bg-background/40 relative z-10">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6 border border-background shadow-sm">
-                        <AvatarImage src={squad.leader.avatar} />
                         <AvatarFallback>
-                          {squad.leader.name.charAt(0)}
+                          {leaderName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-xs font-medium text-foreground/80">
                         Lead:{" "}
                         <span className="text-foreground">
-                          {squad.leader.name.split(" ")[0]}
+                          {leaderName.split(" ")[0] || "—"}
                         </span>
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <Users className="w-3.5 h-3.5" />
-                      <span>
-                        {squad.members}/{squad.maxMembers}
-                      </span>
+                      <span>{squad.member_count}</span>
                     </div>
                   </CardFooter>
                 </Card>
               </motion.div>
             </Link>
-          ))}
+            );
+          })}
 
           <Link href="/squads/create" className="block h-full">
             <motion.div
@@ -341,6 +255,7 @@ export default function SquadsPage() {
             </motion.div>
           </Link>
         </div>
+        )}
       </main>
     </div>
   );

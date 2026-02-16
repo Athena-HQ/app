@@ -5,8 +5,8 @@ import { TaskStatusBadge } from "./task_status_badge";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Frame, FramePanel } from "@/components/ui/frame";
-import type { Task } from "@/services/task";
-import { getUserById, getCurrentUser } from "@/services/hierarchy";
+import type { TaskResponse, TaskPriority } from "@/services/task";
+import { getCurrentUser } from "@/services/hierarchy";
 import { useTaskStatusUpdate } from "@/hooks/useTaskStatusUpdate";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -23,15 +23,21 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+function appUserDisplayName(user: { first_name?: string; last_name?: string; role?: string | null } | null | undefined): string {
+  if (!user) return "—";
+  const name = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
+  return name || "—";
+}
+
 type TaskDetailsProps = {
-  task: Task;
+  task: TaskResponse;
 };
 
-const priorityColors: Record<Task["priority"], string> = {
+const priorityColors: Record<TaskPriority, string> = {
   low: "bg-blue-500/10 text-blue-500",
   medium: "bg-yellow-500/10 text-yellow-500",
   high: "bg-orange-500/10 text-orange-500",
-  urgent: "bg-red-500/10 text-red-500",
+  critical: "bg-red-500/10 text-red-500",
 };
 
 function formatDistanceToNow(date: Date): string {
@@ -55,27 +61,29 @@ function formatDistanceToNow(date: Date): string {
 }
 
 export function TaskDetails({ task }: TaskDetailsProps) {
-  const assignee = getUserById(task.assigneeId);
-  const assigner = getUserById(task.assignerId);
   const currentUser = getCurrentUser();
+  const assigneeName = appUserDisplayName(task.assigned_to);
+  const assignerName = appUserDisplayName(task.assigned_by);
   const statusUpdate = useTaskStatusUpdate();
   const isOverdue =
-    task.dueDate &&
-    new Date(task.dueDate) < new Date() &&
+    task.due_date &&
+    new Date(task.due_date) < new Date() &&
     task.status !== "completed" &&
-    task.status !== "reviewed";
-  const canEdit = task.assignerId === currentUser.id;
+    task.status !== "under_review";
+  const assignerId = task.assigned_by ? String(task.assigned_by.id) : "";
+  const assigneeId = task.assigned_to ? String(task.assigned_to.id) : "";
+  const canEdit = assignerId === currentUser.id;
   const canUpdateStatus =
-    task.assigneeId === currentUser.id || task.assignerId === currentUser.id;
+    assigneeId === currentUser.id || assignerId === currentUser.id;
   const needsReview =
-    task.status === "completed" && task.assignerId === currentUser.id;
+    task.status === "completed" && assignerId === currentUser.id;
 
-  const handleStatusChange = (newStatus: typeof task.status) => {
-    statusUpdate.mutate({ taskId: task.id, status: newStatus });
+  const handleStatusChange = (newStatus: TaskResponse["status"]) => {
+    statusUpdate.mutate({ taskId: String(task.id), status: newStatus });
   };
 
   const handleMarkAsReviewed = () => {
-    statusUpdate.mutate({ taskId: task.id, status: "reviewed" });
+    statusUpdate.mutate({ taskId: String(task.id), status: "under_review" });
   };
 
   return (
@@ -113,9 +121,6 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   <Badge variant="outline" className="text-xs capitalize">
                     <Tag className="h-3 w-3 mr-1" />
                     {task.category}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs capitalize">
-                    {task.type}
                   </Badge>
                 </div>
               </div>
@@ -170,13 +175,13 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   <MetadataItem
                     icon={User}
                     label="Assignee"
-                    value={assignee ? `${assignee.name} · ${assignee.role}` : undefined}
+                    value={task.assigned_to ? `${assigneeName}${task.assigned_to.role ? ` · ${task.assigned_to.role}` : ""}` : undefined}
                   />
 
                   <MetadataItem
                     icon={User}
                     label="Assigned By"
-                    value={assigner ? `${assigner.name} · ${assigner.role}` : undefined}
+                    value={task.assigned_by ? `${assignerName}${task.assigned_by.role ? ` · ${task.assigned_by.role}` : ""}` : undefined}
                   />
 
                   <MetadataItem icon={Flag} label="Status">
@@ -198,7 +203,7 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                     )}
                   </MetadataItem>
 
-                  {task.dueDate && (
+                  {task.due_date && (
                     <MetadataItem icon={Calendar} label="Due Date">
                       <div className="flex items-center gap-2">
                         <p
@@ -207,7 +212,7 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                             isOverdue && "text-destructive"
                           )}
                         >
-                          {new Date(task.dueDate).toLocaleDateString("en-US", {
+                          {new Date(task.due_date).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
@@ -225,14 +230,14 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   <MetadataItem icon={Clock} label="Created">
                     <div className="flex flex-col">
                       <p className="text-sm font-medium text-foreground">
-                        {task.createdAt.toLocaleDateString("en-US", {
+                        {new Date(task.created_at).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
                         })}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(task.createdAt)}
+                        {formatDistanceToNow(new Date(task.created_at))}
                       </p>
                     </div>
                   </MetadataItem>
@@ -240,14 +245,14 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   <MetadataItem icon={Clock} label="Last Updated">
                     <div className="flex flex-col">
                       <p className="text-sm font-medium text-foreground">
-                        {task.updatedAt.toLocaleDateString("en-US", {
+                        {new Date(task.updated_at).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
                         })}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(task.updatedAt)}
+                        {formatDistanceToNow(new Date(task.updated_at))}
                       </p>
                     </div>
                   </MetadataItem>

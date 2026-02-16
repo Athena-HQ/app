@@ -1,7 +1,172 @@
-export type TaskStatus = "assigned" | "in_progress" | "completed" | "reviewed";
-export type TaskPriority = "low" | "medium" | "high" | "urgent";
-export type TaskCategory = "development" | "design" | "qa" | "marketing" | "other";
-export type TaskType = "bug" | "feature" | "improvement" | "task" | "other";
+import { api, ApiError } from "@/lib/api/api-util";
+import type { AppUserResponse } from "./company";
+
+export type TaskStatus =
+  | "assigned"
+  | "in_progress"
+  | "completed"
+  | "under_review"
+  | "on_hold";
+export type TaskPriority = "low" | "medium" | "high" | "critical";
+export type TaskCategory =
+  | "feature"
+  | "bug"
+  | "improvement"
+  | "documentation"
+  | "research"
+  | "testing"
+  | "other";
+
+export interface TaskListResponse {
+  id: number;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  category: TaskCategory;
+  due_date: string | null;
+  assigned_to_name: string | null;
+  assigned_by_name: string | null;
+}
+
+export interface TaskResponse {
+  id: number;
+  title: string;
+  description: string;
+  company: number;
+  squad: number | null;
+  squad_name: string | null;
+  assigned_by: AppUserResponse;
+  assigned_to: AppUserResponse;
+  assigned_to_id?: number;
+  status: TaskStatus;
+  priority: TaskPriority;
+  category: TaskCategory;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description: string;
+  assigned_to_id: number;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  category?: TaskCategory;
+  due_date?: string | null;
+  squad?: number | null;
+}
+
+export interface UpdateTaskRequest {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  due_date?: string | null;
+  assigned_to_id?: number;
+}
+
+export interface TaskFilters {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  assigned_to?: number;
+  squad?: number;
+  assigned_by?: number;
+}
+
+export interface DashboardStatsResponse {
+  to_do: number;
+  in_progress: number;
+  completed: number;
+  on_hold: number;
+  reviewed?: number;
+  total: number;
+}
+
+function buildQueryString(filters: TaskFilters): string {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.priority) params.set("priority", filters.priority);
+  if (filters.assigned_to != null) params.set("assigned_to", String(filters.assigned_to));
+  if (filters.squad != null) params.set("squad", String(filters.squad));
+  if (filters.assigned_by != null) params.set("assigned_by", String(filters.assigned_by));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
+export const listTasks = async (
+  filters: TaskFilters = {}
+): Promise<TaskListResponse[]> => {
+  const qs = buildQueryString(filters);
+  const path = qs ? `/tasks/${qs}` : "/tasks/";
+  const response = await api.get<TaskListResponse[]>(path);
+  return Array.isArray(response) ? response : [];
+};
+
+export const getTask = async (id: number): Promise<TaskResponse> => {
+  const response = await api.get<TaskResponse>(`/tasks/${id}/`);
+  return response;
+};
+
+export const createTask = async (
+  data: CreateTaskRequest
+): Promise<TaskResponse> => {
+  const response = await api.post<TaskResponse>("/tasks/", {
+    ...data,
+    status: data.status ?? "assigned",
+    priority: data.priority ?? "medium",
+    category: data.category ?? "feature",
+  });
+  return response;
+};
+
+export const updateTask = async (
+  id: number,
+  data: UpdateTaskRequest
+): Promise<TaskResponse> => {
+  const response = await api.patch<TaskResponse>(`/tasks/${id}/`, data);
+  return response;
+};
+
+export const deleteTask = async (id: number): Promise<void> => {
+  await api.delete(`/tasks/${id}/`);
+};
+
+export const getMyTasks = async (
+  status?: TaskStatus
+): Promise<TaskListResponse[]> => {
+  const qs = status ? `?status=${status}` : "";
+  const response = await api.get<TaskListResponse[]>(`/tasks/my_tasks/${qs}`);
+  return Array.isArray(response) ? response : [];
+};
+
+export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
+  const response = await api.get<DashboardStatsResponse>(
+    "/tasks/dashboard_stats/"
+  );
+  return response;
+};
+
+export const TASK_PRIORITIES: TaskPriority[] = [
+  "low",
+  "medium",
+  "high",
+  "critical",
+];
+export const TASK_CATEGORIES: TaskCategory[] = [
+  "feature",
+  "bug",
+  "improvement",
+  "documentation",
+  "research",
+  "testing",
+  "other",
+];
+export const TASK_STATUSES: TaskStatus[] = [
+  "assigned",
+  "in_progress",
+  "completed",
+  "under_review",
+  "on_hold",
+];
 
 export interface Task {
   id: string;
@@ -12,191 +177,83 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   category: TaskCategory;
-  type: TaskType;
   dueDate?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface CreateTaskData {
-  title: string;
-  description: string;
-  assigneeId: string;
-  priority: TaskPriority;
-  category: TaskCategory;
-  type: TaskType;
-  dueDate?: string;
+export function taskListResponseToTask(t: TaskListResponse): Task {
+  return {
+    id: String(t.id),
+    title: t.title,
+    description: "",
+    assignerId: "",
+    assigneeId: "",
+    status: t.status,
+    priority: t.priority,
+    category: t.category,
+    dueDate: t.due_date ?? undefined,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 }
 
-export interface UpdateTaskData {
-  title?: string;
-  description?: string;
-  assigneeId?: string;
-  priority?: TaskPriority;
-  category?: TaskCategory;
-  type?: TaskType;
-  dueDate?: string;
-}
-
-export interface TaskFilters {
-  assigneeId?: string;
-  assignerId?: string;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  category?: TaskCategory;
-  type?: TaskType;
-  dueDateFrom?: string;
-  dueDateTo?: string;
-}
-
-let mockTasks: Task[] = [
-  {
-    id: "task_1",
-    title: "Implement user authentication",
-    description: "Add login and signup functionality with JWT tokens",
-    assignerId: "user_cto",
-    assigneeId: "user_senior_eng",
-    status: "in_progress",
-    priority: "high",
-    category: "development",
-    type: "feature",
-    dueDate: "2025-12-15",
-    createdAt: new Date("2025-11-20"),
-    updatedAt: new Date("2025-11-22"),
-  },
-  {
-    id: "task_2",
-    title: "Fix login button styling",
-    description: "The login button is not aligned properly on mobile devices",
-    assignerId: "user_senior_eng",
-    assigneeId: "user_eng",
-    status: "assigned",
-    priority: "medium",
-    category: "development",
-    type: "bug",
-    dueDate: "2025-12-10",
-    createdAt: new Date("2025-11-25"),
-    updatedAt: new Date("2025-11-25"),
-  },
-  {
-    id: "task_3",
-    title: "Design new dashboard layout",
-    description: "Create wireframes and mockups for the new dashboard design",
-    assignerId: "user_pm",
-    assigneeId: "user_eng",
-    status: "completed",
-    priority: "high",
-    category: "design",
-    type: "feature",
-    dueDate: "2025-11-30",
-    createdAt: new Date("2025-11-15"),
-    updatedAt: new Date("2025-11-28"),
-  },
-  {
-    id: "task_4",
-    title: "Write unit tests for auth module",
-    description: "Add comprehensive unit tests for authentication functions",
-    assignerId: "user_senior_eng",
-    assigneeId: "user_junior_eng",
-    status: "reviewed",
-    priority: "medium",
-    category: "qa",
-    type: "task",
-    dueDate: "2025-12-05",
-    createdAt: new Date("2025-11-18"),
-    updatedAt: new Date("2025-11-29"),
-  },
-];
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function filterTasks(tasks: Task[], filters: TaskFilters): Task[] {
-  return tasks.filter((task) => {
-    if (filters.assigneeId && task.assigneeId !== filters.assigneeId) return false;
-    if (filters.assignerId && task.assignerId !== filters.assignerId) return false;
-    if (filters.status && task.status !== filters.status) return false;
-    if (filters.priority && task.priority !== filters.priority) return false;
-    if (filters.category && task.category !== filters.category) return false;
-    if (filters.type && task.type !== filters.type) return false;
-    if (filters.dueDateFrom && task.dueDate && task.dueDate < filters.dueDateFrom) return false;
-    if (filters.dueDateTo && task.dueDate && task.dueDate > filters.dueDateTo) return false;
-    return true;
-  });
+export function taskResponseToTask(t: TaskResponse): Task {
+  return {
+    id: String(t.id),
+    title: t.title,
+    description: t.description,
+    assignerId: String(t.assigned_by?.id ?? ""),
+    assigneeId: String(t.assigned_to?.id ?? ""),
+    status: t.status,
+    priority: t.priority,
+    category: t.category,
+    dueDate: t.due_date ?? undefined,
+    createdAt: new Date(t.created_at),
+    updatedAt: new Date(t.updated_at),
+  };
 }
 
 export const taskService = {
-  async createTask(data: CreateTaskData, assignerId: string): Promise<Task> {
-    await delay(800);
-
-    const newTask: Task = {
-      id: `task_${Math.random().toString(36).substring(2, 9)}`,
-      title: data.title,
-      description: data.description,
-      assignerId,
-      assigneeId: data.assigneeId,
-      status: "assigned",
-      priority: data.priority,
-      category: data.category,
-      type: data.type,
-      dueDate: data.dueDate,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    mockTasks = [newTask, ...mockTasks];
-    return newTask;
+  async createTask(
+    data: CreateTaskRequest,
+    assignerId: string
+  ): Promise<TaskResponse> {
+    void assignerId;
+    return createTask(data);
   },
-
-  async getTasks(filters: TaskFilters = {}): Promise<Task[]> {
-    await delay(500);
-    return filterTasks([...mockTasks], filters);
+  async getTasks(filters: TaskFilters = {}): Promise<TaskListResponse[]> {
+    return listTasks(filters);
   },
-
-  async getTaskById(id: string): Promise<Task | undefined> {
-    await delay(300);
-    return mockTasks.find((t) => t.id === id);
+  async getTaskById(id: string): Promise<TaskResponse | null> {
+    const numId = parseInt(id, 10);
+    if (Number.isNaN(numId)) return null;
+    try {
+      return await getTask(numId);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
   },
-
-  async updateTaskStatus(id: string, status: TaskStatus): Promise<Task> {
-    await delay(500);
-
-    const task = mockTasks.find((t) => t.id === id);
-    if (!task) throw new Error("Task not found");
-
-    task.status = status;
-    task.updatedAt = new Date();
-
-    return task;
+  async updateTaskStatus(
+    id: string,
+    status: TaskStatus
+  ): Promise<TaskResponse> {
+    const numId = parseInt(id, 10);
+    if (Number.isNaN(numId)) throw new Error("Invalid task id");
+    return updateTask(numId, { status });
   },
-
-  async updateTask(id: string, data: UpdateTaskData): Promise<Task> {
-    await delay(600);
-
-    const task = mockTasks.find((t) => t.id === id);
-    if (!task) throw new Error("Task not found");
-
-    if (data.title !== undefined) task.title = data.title;
-    if (data.description !== undefined) task.description = data.description;
-    if (data.assigneeId !== undefined) task.assigneeId = data.assigneeId;
-    if (data.priority !== undefined) task.priority = data.priority;
-    if (data.category !== undefined) task.category = data.category;
-    if (data.type !== undefined) task.type = data.type;
-    if (data.dueDate !== undefined) task.dueDate = data.dueDate;
-    task.updatedAt = new Date();
-
-    return task;
+  async updateTask(
+    id: string,
+    data: UpdateTaskRequest & { title?: string; description?: string }
+  ): Promise<TaskResponse> {
+    const numId = parseInt(id, 10);
+    if (Number.isNaN(numId)) throw new Error("Invalid task id");
+    return updateTask(numId, data);
   },
-
   async deleteTask(id: string): Promise<void> {
-    await delay(400);
-    mockTasks = mockTasks.filter((t) => t.id !== id);
+    const numId = parseInt(id, 10);
+    if (Number.isNaN(numId)) throw new Error("Invalid task id");
+    return deleteTask(numId);
   },
 };
-
-export const TASK_PRIORITIES: TaskPriority[] = ["low", "medium", "high", "urgent"];
-export const TASK_CATEGORIES: TaskCategory[] = ["development", "design", "qa", "marketing", "other"];
-export const TASK_TYPES: TaskType[] = ["bug", "feature", "improvement", "task", "other"];
-export const TASK_STATUSES: TaskStatus[] = ["assigned", "in_progress", "completed", "reviewed"];
-

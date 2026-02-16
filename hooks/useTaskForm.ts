@@ -4,7 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { taskFormSchema, type TaskFormValues } from "@/lib/validations/task";
-import { taskService, type TaskPriority, type TaskCategory, type TaskType } from "@/services/task";
+import { taskService, type TaskPriority, type TaskCategory } from "@/services/task";
 import { getCurrentUser } from "@/services/hierarchy";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTask } from "./useTasks";
@@ -35,10 +35,12 @@ export function useTaskForm(taskId?: string) {
 
   const createMutation = useMutation({
     mutationFn: (data: TaskFormValues) => taskService.createTask({
-      ...data,
+      title: data.title,
+      description: data.description,
+      assigned_to_id: parseInt(data.assigneeId, 10),
       priority: data.priority as TaskPriority,
       category: data.category as TaskCategory,
-      type: data.type as TaskType,
+      due_date: data.dueDate ? data.dueDate : null,
     }, currentUser.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -54,10 +56,9 @@ export function useTaskForm(taskId?: string) {
     mutationFn: (data: TaskFormValues) => {
       if (!taskId) throw new Error("Task ID is required");
       return taskService.updateTask(taskId, {
-        ...data,
         priority: data.priority as TaskPriority,
-        category: data.category as TaskCategory,
-        type: data.type as TaskType,
+        due_date: data.dueDate ? data.dueDate : null,
+        assigned_to_id: data.assigneeId ? parseInt(data.assigneeId, 10) : undefined,
       });
     },
     onSuccess: () => {
@@ -77,8 +78,7 @@ export function useTaskForm(taskId?: string) {
       description: "",
       assigneeId: "",
       priority: "medium" as const,
-      category: "development" as const,
-      type: "task" as const,
+      category: "feature" as const,
       dueDate: "",
     } as TaskFormValues,
     onSubmit: async ({ value }) => {
@@ -98,11 +98,10 @@ export function useTaskForm(taskId?: string) {
     if (task) {
       form.setFieldValue("title", task.title);
       form.setFieldValue("description", task.description);
-      form.setFieldValue("assigneeId", task.assigneeId);
+      form.setFieldValue("assigneeId", String(task.assigned_to?.id ?? ""));
       form.setFieldValue("priority", task.priority);
       form.setFieldValue("category", task.category);
-      form.setFieldValue("type", task.type);
-      form.setFieldValue("dueDate", task.dueDate || "");
+      form.setFieldValue("dueDate", task.due_date ?? "");
     }
   }, [task, form]);
 

@@ -1,92 +1,140 @@
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTasks } from "./useTasks";
 import { getCurrentUser } from "@/services/hierarchy";
-import { dashboardService } from "@/services/dashboard";
-import type { Task } from "@/services/task";
+import {
+  dashboardService,
+  getDashboardStats,
+  getDashboardPerformance,
+  performanceToCompletionData,
+} from "@/services/dashboard";
+import type { TaskListResponse } from "@/services/task";
+import { taskListResponseToTask } from "@/services/task";
+import { getMyXp, getMyBadges } from "@/services/gamification";
 
 export interface DashboardStats {
-  assignedTasks: Task[];
-  inProgressTasks: Task[];
-  todoTasks: Task[];
-  doneTasks: Task[];
-  onHoldTasks: Task[];
-  needsReviewTasks: Task[];
+  assignedTasks: TaskListResponse[];
+  inProgressTasks: TaskListResponse[];
+  todoTasks: TaskListResponse[];
+  doneTasks: TaskListResponse[];
+  onHoldTasks: TaskListResponse[];
+  needsReviewTasks: TaskListResponse[];
   completionRate: number;
   averageCompletionTime: number;
   currentStreak: number;
   gamification: ReturnType<typeof dashboardService.getGamificationData>;
   taskCompletionData: {
-    threeMonths: ReturnType<typeof dashboardService.getTaskCompletionData>;
-    sixMonths: ReturnType<typeof dashboardService.getTaskCompletionData>;
-    twelveMonths: ReturnType<typeof dashboardService.getTaskCompletionData>;
+    threeMonths: { date: string; count: number }[];
+    sixMonths: { date: string; count: number }[];
+    twelveMonths: { date: string; count: number }[];
+  };
+  widgetCounts: {
+    todo: number;
+    inProgress: number;
+    done: number;
+    onHold: number;
   };
 }
 
 export function useDashboardStats() {
   const currentUser = getCurrentUser();
-  const { data: allTasks = [], isLoading } = useTasks({});
+  const currentUserId = parseInt(currentUser.id, 10);
+
+  const { data: apiStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["dashboard", "stats", "personal"],
+    queryFn: () => getDashboardStats("personal"),
+    staleTime: 1000 * 60,
+  });
+
+  const [perf3, perf6, perf12] = useQueries({
+    queries: [3, 6, 12].map((months) => ({
+      queryKey: ["dashboard", "performance", "personal", months] as const,
+      queryFn: () =>
+        getDashboardPerformance("personal", undefined, months as 3 | 6 | 12),
+      staleTime: 1000 * 60,
+    })),
+  });
+
+  const { data: myXp } = useQuery({
+    queryKey: ["gamification", "my_xp"],
+    queryFn: getMyXp,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: myBadges = [] } = useQuery({
+    queryKey: ["gamification", "my_badges"],
+    queryFn: getMyBadges,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: assignedTasksRaw = [], isLoading: tasksLoading } = useTasks(
+    Number.isNaN(currentUserId) ? {} : { assigned_to: currentUserId }
+  );
+  const { data: needsReviewRaw = [] } = useTasks(
+    Number.isNaN(currentUserId)
+      ? {}
+      : { status: "completed", assigned_by: currentUserId }
+  );
 
   const stats = useMemo((): DashboardStats => {
-    const assignedTasks = allTasks.filter(
-      (t) => t.assigneeId === currentUser.id
-    );
+    const assignedTasks = assignedTasksRaw;
     const inProgressTasks = assignedTasks.filter(
       (t) => t.status === "in_progress"
     );
     const todoTasks = assignedTasks.filter((t) => t.status === "assigned");
     const doneTasks = assignedTasks.filter(
-      (t) => t.status === "completed" || t.status === "reviewed"
+      (t) => t.status === "completed" || t.status === "under_review"
     );
     const onHoldTasks = assignedTasks.filter(
       (t) =>
-        t.status === "assigned" && t.dueDate && new Date(t.dueDate) < new Date()
+        t.status === "assigned" &&
+        t.due_date &&
+        new Date(t.due_date) < new Date()
     );
+    const needsReviewTasks = needsReviewRaw;
 
-    const needsReviewTasks = allTasks.filter(
-      (t) => t.status === "completed" && t.assignerId === currentUser.id
-    );
-
-    const totalAssigned = assignedTasks.length;
+    const totalAssigned = apiStats?.total ?? assignedTasks.length;
+    const doneCount = apiStats
+      ? apiStats.done + apiStats.under_review
+      : doneTasks.length;
     const completionRate =
-      totalAssigned > 0 ? (doneTasks.length / totalAssigned) * 100 : 0;
+      totalAssigned > 0 ? (doneCount / totalAssigned) * 100 : 0;
 
-    const completedWithDates = doneTasks.filter((t) => t.updatedAt);
-    let averageCompletionTime = 0;
-    if (completedWithDates.length > 0) {
-      const totalTime = completedWithDates.reduce((acc, task) => {
-        const created = new Date(task.createdAt).getTime();
-        const updated = new Date(task.updatedAt).getTime();
-        return acc + (updated - created);
-      }, 0);
-      averageCompletionTime = totalTime / completedWithDates.length / (1000 * 60 * 60 * 24);
-    }
+    const assignedAsTask = assignedTasks.map(taskListResponseToTask);
+    const clientGamification = dashboardService.getGamificationData(assignedAsTask);
+    const gamification = {
+      ...clientGamification,
+      xp: myXp?.total_xp ?? clientGamification.xp,
+      level: myXp?.level ?? clientGamification.level,
+      xpToNextLevel: myXp
+        ? Math.max(0, (Math.floor(myXp.total_xp / 1000) + 1) * 1000 - myXp.total_xp)
+        : clientGamification.xpToNextLevel,
+      totalXpForNextLevel: myXp
+        ? (Math.floor(myXp.total_xp / 1000) + 1) * 1000
+        : clientGamification.totalXpForNextLevel,
+      badges:
+        myBadges.length > 0
+          ? myBadges.map((eb) => ({
+              id: String(eb.id),
+              name: eb.badge.name,
+              description: eb.badge.description,
+              icon: eb.badge.icon || "🏅",
+              earnedAt: new Date(eb.earned_at),
+            }))
+          : clientGamification.badges,
+    };
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let currentStreak = 0;
-    const sortedDoneTasks = [...doneTasks]
-      .filter((t) => t.updatedAt)
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+    const threeMonths = performanceToCompletionData(perf3.data ?? []);
+    const sixMonths = performanceToCompletionData(perf6.data ?? []);
+    const twelveMonths = performanceToCompletionData(perf12.data ?? []);
 
-    if (sortedDoneTasks.length > 0) {
-      const checkDate = new Date(today);
-      for (const task of sortedDoneTasks) {
-        const taskDate = new Date(task.updatedAt);
-        taskDate.setHours(0, 0, 0, 0);
-
-        if (taskDate.getTime() === checkDate.getTime()) {
-          currentStreak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else if (taskDate.getTime() < checkDate.getTime()) {
-          break;
-        }
-      }
-    }
-
-    const gamification = dashboardService.getGamificationData(assignedTasks);
+    const todoCount = apiStats?.to_do ?? todoTasks.length;
+    const inProgressCount = apiStats?.in_progress ?? inProgressTasks.length;
+    const doneCountForWidget =
+      apiStats != null
+        ? apiStats.done + apiStats.under_review
+        : doneTasks.length;
+    const onHoldCount = apiStats?.on_hold ?? onHoldTasks.length;
 
     return {
       assignedTasks,
@@ -96,22 +144,33 @@ export function useDashboardStats() {
       onHoldTasks,
       needsReviewTasks,
       completionRate: Math.round(completionRate * 10) / 10,
-      averageCompletionTime: Math.round(averageCompletionTime * 10) / 10,
-      currentStreak,
+      averageCompletionTime: 0,
+      currentStreak: 0,
       gamification,
       taskCompletionData: {
-        threeMonths: dashboardService.getTaskCompletionData(
-          assignedTasks,
-          3
-        ),
-        sixMonths: dashboardService.getTaskCompletionData(assignedTasks, 6),
-        twelveMonths: dashboardService.getTaskCompletionData(
-          assignedTasks,
-          12
-        ),
+        threeMonths,
+        sixMonths,
+        twelveMonths,
+      },
+      widgetCounts: {
+        todo: todoCount,
+        inProgress: inProgressCount,
+        done: doneCountForWidget,
+        onHold: onHoldCount,
       },
     };
-  }, [allTasks, currentUser.id]);
+  }, [
+    assignedTasksRaw,
+    needsReviewRaw,
+    apiStats,
+    perf3.data,
+    perf6.data,
+    perf12.data,
+    myXp,
+    myBadges,
+  ]);
+
+  const isLoading = statsLoading || tasksLoading;
 
   return { data: stats, isLoading };
 }

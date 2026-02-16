@@ -42,46 +42,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Task } from "@/services/task";
+import type { TaskListResponse, TaskPriority } from "@/services/task";
 import { TaskStatusBadge } from "./task_status_badge";
-import { getUserById, getCurrentUser } from "@/services/hierarchy";
 import { AlertCircle } from "lucide-react";
 
-function formatDistanceToNow(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) {
-    return "just now";
-  } else if (diffMins < 60) {
-    return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-  } else if (diffDays < 30) {
-    return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
-}
-
-const priorityColors: Record<Task["priority"], string> = {
+const priorityColors: Record<TaskPriority, string> = {
   low: "bg-blue-500/10 text-blue-500",
   medium: "bg-yellow-500/10 text-yellow-500",
   high: "bg-orange-500/10 text-orange-500",
-  urgent: "bg-red-500/10 text-red-500",
+  critical: "bg-red-500/10 text-red-500",
 };
 
 type TaskTableProps = {
-  tasks: Task[];
+  tasks: TaskListResponse[];
   isLoading?: boolean;
+  needsReviewIds?: Set<string>;
 };
 
-export function TaskTable({ tasks, isLoading }: TaskTableProps) {
+export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) {
   const pageSize = 10;
-  const currentUser = getCurrentUser();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -91,14 +70,14 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
   const [sorting, setSorting] = useState<SortingState>([
     {
       desc: true,
-      id: "updatedAt",
+      id: "due_date",
     },
   ]);
 
-  const columns: ColumnDef<Task>[] = useMemo(() => [
+  const columns: ColumnDef<TaskListResponse>[] = useMemo(() => [
     {
       accessorKey: "title",
-      cell: ({ row }: { row: Row<Task> }) => (
+      cell: ({ row }: { row: Row<TaskListResponse> }) => (
         <Link
           href={`/tasks/${row.original.id}`}
           className="font-medium hover:underline"
@@ -111,10 +90,9 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
     },
     {
       accessorKey: "status",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const status = row.getValue("status") as Task["status"];
-        const needsReview =
-          status === "completed" && row.original.assignerId === currentUser.id;
+      cell: ({ row }: { row: Row<TaskListResponse> }) => {
+        const status = row.original.status;
+        const needsReview = needsReviewIds?.has(String(row.original.id));
         return (
           <div className="flex items-center gap-2">
             <TaskStatusBadge status={status} />
@@ -132,8 +110,8 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
     },
     {
       accessorKey: "priority",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const priority = row.getValue("priority") as Task["priority"];
+      cell: ({ row }: { row: Row<TaskListResponse> }) => {
+        const priority = row.original.priority;
         return (
           <Badge className={cn("text-xs", priorityColors[priority])}>
             {priority}
@@ -144,58 +122,44 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
       size: 100,
     },
     {
-      accessorKey: "assigneeId",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const assignee = getUserById(row.original.assigneeId);
-        return (
-          <div className="text-sm">{assignee ? assignee.name : "Unknown"}</div>
-        );
-      },
+      accessorKey: "assigned_to_name",
+      cell: ({ row }: { row: Row<TaskListResponse> }) => (
+        <div className="text-sm">
+          {row.original.assigned_to_name ?? "—"}
+        </div>
+      ),
       header: "Assignee",
       size: 150,
     },
     {
-      accessorKey: "assignerId",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const assigner = getUserById(row.original.assignerId);
-        return (
-          <div className="text-sm text-muted-foreground">
-            {assigner ? assigner.name : "Unknown"}
-          </div>
-        );
-      },
+      accessorKey: "assigned_by_name",
+      cell: ({ row }: { row: Row<TaskListResponse> }) => (
+        <div className="text-sm text-muted-foreground">
+          {row.original.assigned_by_name ?? "—"}
+        </div>
+      ),
       header: "Assigned By",
       size: 150,
     },
     {
       accessorKey: "category",
-      cell: ({ row }: { row: Row<Task> }) => (
+      cell: ({ row }: { row: Row<TaskListResponse> }) => (
         <Badge variant="outline" className="text-xs">
-          {row.getValue("category")}
+          {row.original.category}
         </Badge>
       ),
       header: "Category",
       size: 120,
     },
     {
-      accessorKey: "type",
-      cell: ({ row }: { row: Row<Task> }) => (
-        <span className="text-sm text-muted-foreground capitalize">
-          {row.getValue("type")}
-        </span>
-      ),
-      header: "Type",
-      size: 100,
-    },
-    {
-      accessorKey: "dueDate",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const dueDate = row.getValue("dueDate") as string | undefined;
+      accessorKey: "due_date",
+      cell: ({ row }: { row: Row<TaskListResponse> }) => {
+        const dueDate = row.original.due_date;
         if (!dueDate) return <span className="text-muted-foreground">-</span>;
         const isOverdue =
           new Date(dueDate) < new Date() &&
           row.original.status !== "completed" &&
-          row.original.status !== "reviewed";
+          row.original.status !== "under_review";
         return (
           <span
             className={cn(
@@ -210,20 +174,7 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
       header: "Due Date",
       size: 120,
     },
-    {
-      accessorKey: "updatedAt",
-      cell: ({ row }: { row: Row<Task> }) => {
-        const date = row.getValue("updatedAt") as Date;
-        return (
-          <span className="text-sm text-muted-foreground">
-            {formatDistanceToNow(date)}
-          </span>
-        );
-      },
-      header: "Updated",
-      size: 120,
-    },
-  ], [currentUser.id]);
+  ], [needsReviewIds]);
 
   const tableOptions = useMemo(() => ({
     columns,
@@ -240,6 +191,7 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
     },
   }), [columns, tasks, pagination, sorting]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns unstable refs by design
   const table = useReactTable(tableOptions);
 
   if (isLoading) {
@@ -250,7 +202,7 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
             {columns.map((col, idx) => (
               <TableHead
                 key={idx}
-                style={{ width: col.size ? `${col.size}px` : undefined }}
+                style={{ width: (col as { size?: number }).size ? `${(col as { size?: number }).size}px` : undefined }}
               >
                 {typeof col.header === "string" ? col.header : ""}
               </TableHead>
@@ -277,9 +229,9 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
       <Frame className="w-full">
         <Table className="table-fixed">
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup: { id: string; headers: Header<Task, unknown>[] }) => (
+            {table.getHeaderGroups().map((headerGroup: { id: string; headers: Header<TaskListResponse, unknown>[] }) => (
               <TableRow className="hover:bg-transparent" key={headerGroup.id}>
-                {headerGroup.headers.map((header: Header<Task, unknown>) => {
+                {headerGroup.headers.map((header: Header<TaskListResponse, unknown>) => {
                   const columnSize = header.column.getSize();
                   return (
                     <TableHead
@@ -405,10 +357,8 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row: Row<Task>) => {
-              const needsReview =
-                row.original.status === "completed" &&
-                row.original.assignerId === currentUser.id;
+            table.getRowModel().rows.map((row: Row<TaskListResponse>) => {
+              const needsReview = needsReviewIds?.has(String(row.original.id));
               return (
                 <TableRow
                   key={row.id}
@@ -423,7 +373,7 @@ export function TaskTable({ tasks, isLoading }: TaskTableProps) {
                     }
                   }}
                 >
-                  {row.getVisibleCells().map((cell: Cell<Task, unknown>) => (
+                  {row.getVisibleCells().map((cell: Cell<TaskListResponse, unknown>) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,

@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTokens();
       const pathname =
         typeof window !== "undefined" ? window.location.pathname : "";
-      const publicPrefixes = ["/login", "/join", "/onboarding", "/verify"];
+      const publicPrefixes = ["/login", "/join", "/onboarding", "/verify", "/accept-invitation"];
       const isPublicRoute = publicPrefixes.some(
         (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
       );
