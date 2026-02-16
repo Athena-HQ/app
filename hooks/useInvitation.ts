@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -11,7 +12,10 @@ import {
   type InvitationRole,
 } from "@/services/invitation";
 import { getCompanies } from "@/services/company";
-import { invitationFormSchema } from "@/lib/validations/invitation";
+import {
+  invitationFormSchema,
+  type InvitationFormValues,
+} from "@/lib/validations/invitation";
 import type { QueryClient } from "@tanstack/react-query";
 
 async function resolveCompanyId(queryClient: QueryClient): Promise<number> {
@@ -56,22 +60,27 @@ export const useInvitationForm = () => {
     },
   });
 
-  const form = useForm({
+  const form = useForm<InvitationFormValues>({
+    resolver: zodResolver(invitationFormSchema),
     defaultValues: {
       email: "",
       role: "" as InvitationRole,
     },
-    onSubmit: async ({ value }) => {
-      const result = invitationFormSchema.safeParse(value);
-      if (!result.success) {
-        return;
-      }
-      await sendInvitationMutation.mutateAsync(value);
-      form.reset();
-    },
   });
 
-  return { form, isSubmitting: sendInvitationMutation.isPending };
+  const onSubmit = async (data: InvitationFormValues) => {
+    await sendInvitationMutation.mutateAsync({
+      email: data.email,
+      role: data.role as InvitationRole,
+    });
+    form.reset();
+  };
+
+  return {
+    form,
+    onSubmit,
+    isSubmitting: sendInvitationMutation.isPending,
+  };
 };
 
 export const useInvitationActions = () => {

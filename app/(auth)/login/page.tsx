@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FieldInfo } from "@/components/field_info";
+import { FormError } from "@/components/form_error";
 import { useLoginForm } from "@/hooks/use_login_form";
 import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
@@ -43,10 +43,13 @@ function SearchParamsHandler() {
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email");
-  const form = useLoginForm(emailParam ?? undefined);
+  const { register, handleSubmit, formState, onSubmit } = useLoginForm(
+    emailParam ?? undefined
+  );
+  const { errors, isSubmitting } = formState;
 
   return (
-    <div className=" flex items-center justify-center w-full">
+    <div className=" flex flex-col gap-6 w-full items-center justify-center">
       <Suspense fallback={null}>
         <SearchParamsHandler />
       </Suspense>
@@ -57,89 +60,34 @@ export default function LoginPage() {
             Sign in to your Athena HQ account
           </p>
         </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-          className="flex flex-col gap-6"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <form.Field
-              name="email"
-              validators={{
-                onBlur: ({ value }) =>
-                  !value
-                    ? "Email is required"
-                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                      ? "Please enter a valid email address"
-                      : undefined,
-              }}
-            >
-              {(field) => (
-                <>
-                  <Label htmlFor={field.name}>Email</Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="email"
-                    placeholder="Enter your email"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    }
-                  />
-                  <FieldInfo field={field} />
-                </>
-              )}
-            </form.Field>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              aria-invalid={Boolean(errors.email)}
+              {...register("email")}
+            />
+            <FormError message={errors.email?.message} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <form.Field
-              name="password"
-              validators={{
-                onBlur: ({ value }) =>
-                  !value
-                    ? "Password is required"
-                    : value.length < 6
-                      ? "Password must be at least 6 characters long"
-                      : undefined,
-              }}
-            >
-              {(field) => (
-                <>
-                  <Label htmlFor={field.name}>Password</Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="password"
-                    placeholder="Enter your password"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    }
-                  />
-                  <FieldInfo field={field} />
-                </>
-              )}
-            </form.Field>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              aria-invalid={Boolean(errors.password)}
+              {...register("password")}
+            />
+            <FormError message={errors.password?.message} />
           </div>
 
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-          >
-            {([canSubmit, isSubmitting]) => (
-              <Button type="submit" className="w-full" disabled={!canSubmit}>
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
-            )}
-          </form.Subscribe>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </Button>
         </form>
 
         <div className="mt-4 text-center text-sm">

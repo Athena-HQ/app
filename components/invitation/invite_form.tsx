@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,14 +11,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { FieldInfo } from "@/components/field_info";
+import { FormError } from "@/components/form_error";
 import { useInvitationForm } from "@/hooks/useInvitation";
 import { INVITATION_ROLES, type InvitationRole } from "@/services/invitation";
 import { FileUpIcon } from "lucide-react";
 import { fadeInUpVariants } from "@/lib/animations-settings";
 
 export function InviteForm() {
-  const { form, isSubmitting } = useInvitationForm();
+  const { form, onSubmit, isSubmitting } = useInvitationForm();
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = form;
 
   return (
     <motion.div
@@ -36,100 +43,61 @@ export function InviteForm() {
         </div>
 
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
+          onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-6"
         >
           <div className="flex flex-col gap-2">
-            <form.Field
-              name="email"
-              validators={{
-                onBlur: ({ value }) =>
-                  !value
-                    ? "Email is required"
-                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                    ? "Please enter a valid email address"
-                    : undefined,
-              }}
-            >
-              {(field) => (
-                <>
-                  <Label htmlFor={field.name}>Email address</Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="email"
-                    placeholder="e.g., alex.doe@example.co"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={
-                      field.state.meta.isTouched && !field.state.meta.isValid
-                    }
-                  />
-                  <FieldInfo field={field} />
-                </>
-              )}
-            </form.Field>
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="e.g., alex.doe@example.co"
+              aria-invalid={Boolean(errors.email)}
+              {...register("email")}
+            />
+            <FormError message={errors.email?.message} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <form.Field
+            <Label htmlFor="role">Role</Label>
+            <Controller
               name="role"
-              validators={{
-                onBlur: ({ value }) =>
-                  !value ? "Please select a role" : undefined,
-              }}
-            >
-              {(field) => (
-                <>
-                  <Label htmlFor={field.name}>Role</Label>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(value: string) => field.handleChange(value as InvitationRole)}
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(value: string) =>
+                    field.onChange(value as InvitationRole)
+                  }
+                >
+                  <SelectTrigger
+                    id="role"
+                    aria-invalid={Boolean(errors.role)}
                   >
-                    <SelectTrigger
-                      id={field.name}
-                      aria-invalid={
-                        field.state.meta.isTouched && !field.state.meta.isValid
-                      }
-                    >
-                      <SelectValue>
-                        {field.state.value || "Select a role"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INVITATION_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldInfo field={field} />
-                </>
+                    <SelectValue placeholder="Select a role">
+                      {field.value || "Select a role"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVITATION_ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </form.Field>
+            />
+            <FormError message={errors.role?.message} />
           </div>
 
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
           >
-            {([canSubmit, isSubmittingForm]) => (
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={!canSubmit || isSubmitting || isSubmittingForm}
-              >
-                {isSubmitting || isSubmittingForm
-                  ? "Sending Invite..."
-                  : "Send Invite"}
-              </Button>
-            )}
-          </form.Subscribe>
+            {isSubmitting ? "Sending Invite..." : "Send Invite"}
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

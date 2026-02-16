@@ -48,7 +48,7 @@ export function canAssignTask(assignerId: string, assigneeId: string): boolean {
 
   if (!assigner || !assignee) return false;
 
-  if (assignerId === assigneeId) return false;
+  if (assignerId === assigneeId) return true;
 
   const assignerLevel = getRoleHierarchyLevel(assigner.role);
   const assigneeLevel = getRoleHierarchyLevel(assignee.role);

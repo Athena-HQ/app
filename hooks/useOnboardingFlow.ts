@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   onboardingService,
@@ -40,11 +41,30 @@ type UseOnboardingFlowArgs = {
   token?: string;
 };
 
+function flattenErrors(
+  errors: Record<string, unknown>,
+  prefix = ""
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(errors)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (value && typeof value === "object" && "message" in value) {
+      const msg = (value as { message?: string }).message;
+      if (typeof msg === "string") result[path] = msg;
+    } else if (value && typeof value === "object") {
+      Object.assign(
+        result,
+        flattenErrors(value as Record<string, unknown>, path)
+      );
+    }
+  }
+  return result;
+}
+
 export const useOnboardingFlow = ({ token }: UseOnboardingFlowArgs) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [checklist, setChecklist] = useState<ChecklistPreview | null>(null);
   const [buddy, setBuddy] = useState<BuddyProfile | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const inviteQuery = useQuery({
     queryKey: ["onboarding-invite", token],
@@ -53,7 +73,7 @@ export const useOnboardingFlow = ({ token }: UseOnboardingFlowArgs) => {
     staleTime: Infinity,
   });
 
-  const getDefaultValues = (): OnboardingProfileForm => {
+  const getDefaultValues = useCallback((): OnboardingProfileForm => {
     const fullName = inviteQuery.data?.invite.fullName || "";
     const nameParts = fullName.split(" ");
     return {
@@ -66,31 +86,25 @@ export const useOnboardingFlow = ({ token }: UseOnboardingFlowArgs) => {
       roleDetails: {},
       socialMedia: {},
     };
-  };
+  }, [inviteQuery.data?.invite.fullName]);
 
-  const defaultValues = getDefaultValues();
-
-  const form = useForm<
-    OnboardingProfileForm,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined
-  >({
-    defaultValues,
+  const form = useForm<OnboardingProfileForm>({
+    resolver: zodResolver(onboardingProfileSchema) as never,
+    defaultValues: getDefaultValues(),
+    mode: "onTouched",
   });
 
-  const values = useStore(
-    form.store,
-    (state) => state.values
-  ) as OnboardingProfileForm;
+  useEffect(() => {
+    if (inviteQuery.data?.invite.fullName) {
+      form.reset(getDefaultValues());
+    }
+  }, [inviteQuery.data?.invite.fullName, form, getDefaultValues]);
+
+  const values = form.watch();
+  const formErrors = form.formState.errors;
+  const errors = flattenErrors(
+    formErrors as Record<string, unknown>
+  ) as Record<string, string>;
 
   const initialChecklist = inviteQuery.data?.checklist ?? null;
   const initialBuddy = inviteQuery.data?.buddy ?? null;
@@ -104,89 +118,31 @@ export const useOnboardingFlow = ({ token }: UseOnboardingFlowArgs) => {
     },
   });
 
-  const applyValidationErrors = (issues: Record<string, string>) => {
-    setErrors(issues);
-    return Object.keys(issues).length === 0;
-  };
-
-  const buildGeneralValidation = (): Record<string, string> => {
-    const generalIssues: Record<string, string> = {};
-    const socialMediaValue = values.socialMedia ?? {};
-    const cleanedSocialMedia: Record<string, string | undefined> = {};
-    const socialFields = ["linkedin", "twitter", "github", "website"] as const;
-    socialFields.forEach((field) => {
-      const value = socialMediaValue[field];
-      const trimmed = typeof value === "string" ? value.trim() : "";
-      cleanedSocialMedia[field] = trimmed === "" ? undefined : trimmed;
-    });
-    const cleanedValues = {
-      ...values,
-      socialMedia: cleanedSocialMedia,
-    };
-    const result = onboardingProfileSchema.safeParse(cleanedValues);
-    if (!result.success) {
-      result.error.issues.forEach((issue) => {
-        const key = issue.path.join(".");
-        generalIssues[key] = issue.message;
-      });
-    }
-    return generalIssues;
-  };
-
-  const validateForm = () => {
-    const general = buildGeneralValidation();
-    return applyValidationErrors(general);
-  };
-
   const updateField = (key: keyof OnboardingProfileForm, value: string) => {
-    form.setFieldValue(key, () => value);
+    form.setValue(key, value);
   };
 
   const updateSocialMediaField = (key: string, value: string) => {
-    form.setFieldValue("socialMedia", (prev) => ({
-      ...prev,
+    form.setValue("socialMedia", {
+      ...(values.socialMedia ?? {}),
       [key]: value,
-    }));
+    });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = form.handleSubmit(async (data) => {
     if (!token) {
-      setErrors({ token: "Missing invitation token" });
+      form.setError("root", { message: "Missing invitation token" });
       return;
     }
-
-    if (currentStep === "profile-basic") {
-      const isValid = validateForm();
-      if (!isValid) {
-        return;
-      }
-      const socialMediaValue = values.socialMedia ?? {};
-      const cleanedSocialMedia: Record<string, string | undefined> = {};
-      const socialFields = [
-        "linkedin",
-        "twitter",
-        "github",
-        "website",
-      ] as const;
-      socialFields.forEach((field) => {
-        const value = socialMediaValue[field];
-        const trimmed = typeof value === "string" ? value.trim() : "";
-        cleanedSocialMedia[field] = trimmed === "" ? undefined : trimmed;
+    try {
+      await mutation.mutateAsync({
+        token,
+        profile: data as unknown as OnboardingProfilePayload,
       });
-      const cleanedValues = {
-        ...values,
-        socialMedia: cleanedSocialMedia,
-      };
-      try {
-        await mutation.mutateAsync({
-          token,
-          profile: cleanedValues as OnboardingProfilePayload,
-        });
-      } catch {
-        return;
-      }
+    } catch {
+      // mutation error handled by mutation
     }
-  };
+  });
 
   const startProfile = () => {
     setCurrentStep("profile-basic");

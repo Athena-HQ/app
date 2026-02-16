@@ -1,7 +1,7 @@
 "use client";
 
 import { useSquadCreate } from '@/hooks/useSquadCreate'; 
-import { SquadForm, type SquadFormProps } from '@/components/squad/squad_form';
+import { SquadForm } from "@/components/squad/squad_form";
 import { 
   Briefcase, 
   Code, 
@@ -24,15 +24,17 @@ const roleDefinitions: readonly RoleDefinition[] = [
 const roleColors = roleDefinitions.reduce((acc, curr) => ({ ...acc, [curr.role]: curr.color }), {} as Record<string, string>);
 
 export default function CreateSquadPage() {
-  const { form } = useSquadCreate();
-  const isEditing = false; 
+  const { form, onSubmit, isSubmitting } = useSquadCreate();
+  const isEditing = false;
 
   return (
-    <SquadForm 
-      form={form as unknown as SquadFormProps["form"]} 
-      isEditing={isEditing} 
-      roleDefinitions={roleDefinitions} 
-      roleColors={roleColors} 
+    <SquadForm
+      form={form}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
+      isEditing={isEditing}
+      roleDefinitions={roleDefinitions}
+      roleColors={roleColors}
     />
   );
 }

@@ -24,8 +24,11 @@ import {
   RiLogoutBoxLine,
   RiTaskLine,
   RiGroupLine,
+  RiTeamLine,
+  RiSunLine,
+  RiMoonLine,
 } from "@remixicon/react";
-
+import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
@@ -128,10 +131,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
-  const { canInviteEmployees } = useCurrentUserRole();
+  const { canInviteEmployees, canSeeMySquad } = useCurrentUserRole();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = (resolvedTheme ?? "dark") === "dark";
   const filteredManagementItems = managementItems.filter(
     (item) => !item.inviteOnly || canInviteEmployees
   );
+  const mySquadItem = {
+    title: "My Squad",
+    url: "/my-squad",
+    icon: RiTeamLine,
+  };
+  const sectionsItems = [
+    ...data.navMain[0].items,
+    ...(canSeeMySquad ? [mySquadItem] : []),
+  ];
   return (
     <Sidebar {...props}>
       <SidebarHeader className="flex flex-row items-center gap-2">
@@ -155,7 +169,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {(item.title === "Management"
                   ? filteredManagementItems
-                  : item.items
+                  : item.title === "Sections"
+                    ? sectionsItems
+                    : item.items
                 ).map((navItem) => (
                   <SidebarMenuItem key={navItem.title}>
                     <SidebarMenuButton
@@ -184,6 +200,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <hr className="border-t border-border mx-2 -mt-px" />
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDark ? (
+                <RiSunLine
+                  className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
+                  size={22}
+                  aria-hidden="true"
+                />
+              ) : (
+                <RiMoonLine
+                  className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
+                  size={22}
+                  aria-hidden="true"
+                />
+              )}
+              <span>{isDark ? "Light" : "Dark"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               className="font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"

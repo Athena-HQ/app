@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,10 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date_picker";
-import { FieldInfo } from "@/components/field_info";
+import { FormError } from "@/components/form_error";
 import { useTaskForm } from "@/hooks/useTaskForm";
 import { getSubordinates, getCurrentUser } from "@/services/hierarchy";
-import { TASK_PRIORITIES, TASK_CATEGORIES, type TaskPriority, type TaskCategory } from "@/services/task";
+import {
+  TASK_PRIORITIES,
+  TASK_CATEGORIES,
+  type TaskPriority,
+  type TaskCategory,
+} from "@/services/task";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
@@ -73,13 +79,13 @@ function FormField({
   label,
   required,
   children,
-  field,
+  error,
 }: {
   icon?: React.ComponentType<{ className?: string; size?: number }>;
   label: string;
   required?: boolean;
   children: React.ReactNode;
-  field?: unknown;
+  error?: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -89,103 +95,122 @@ function FormField({
         {required && <span className="text-destructive">*</span>}
       </Label>
       {children}
-      {field ? <FieldInfo field={field as unknown as Parameters<typeof FieldInfo>[0]["field"]} /> : null}
+      <FormError message={error} />
     </div>
   );
 }
 
 export function TaskForm({ taskId }: TaskFormProps) {
-  const { form, isSubmitting } = useTaskForm(taskId);
+  const { form, onSubmit, isSubmitting } = useTaskForm(taskId);
+  const { register, control, handleSubmit, formState: { errors } } = form;
   const currentUser = getCurrentUser();
   const subordinates = getSubordinates(currentUser.id);
+  const assigneeOptions = [
+    {
+      id: currentUser.id,
+      name: `${currentUser.name} (Me)`,
+      role: currentUser.role,
+    },
+    ...subordinates.map((u) => ({
+      id: u.id,
+      name: `${u.name} (${u.role})`,
+      role: u.role,
+    })),
+  ];
 
   return (
     <Frame>
       <FramePanel>
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
+          onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-6"
         >
           <FormSection icon={FileText} title="Basic Information">
-            <form.Field name="title">
-              {(field) => (
-                <FormField icon={FileText} label="Title" required field={field}>
-                  <Input
-                    id={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Enter a clear and descriptive task title"
-                    className="w-full"
-                  />
-                </FormField>
-              )}
-            </form.Field>
+            <FormField
+              icon={FileText}
+              label="Title"
+              required
+              error={errors.title?.message}
+            >
+              <Input
+                id="title"
+                placeholder="Enter a clear and descriptive task title"
+                className="w-full"
+                aria-invalid={Boolean(errors.title)}
+                {...register("title")}
+              />
+            </FormField>
 
-            <form.Field name="description">
-              {(field) => (
-                <FormField
-                  icon={FileText}
-                  label="Description"
-                  required
-                  field={field}
-                >
-                  <Textarea
-                    id={field.name}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="Provide detailed information about the task"
-                    rows={5}
-                    className="w-full"
-                  />
-                </FormField>
-              )}
-            </form.Field>
+            <FormField
+              icon={FileText}
+              label="Description"
+              required
+              error={errors.description?.message}
+            >
+              <Textarea
+                id="description"
+                placeholder="Provide detailed information about the task"
+                rows={5}
+                className="w-full"
+                aria-invalid={Boolean(errors.description)}
+                {...register("description")}
+              />
+            </FormField>
           </FormSection>
 
           <Separator />
 
           <FormSection icon={User} title="Assignment">
-            <form.Field name="assigneeId">
-              {(field) => (
-                <FormField icon={User} label="Assignee" required field={field}>
+            <Controller
+              name="assigneeId"
+              control={control}
+              render={({ field }) => (
+                <FormField
+                  icon={User}
+                  label="Assignee"
+                  required
+                  error={errors.assigneeId?.message}
+                >
                   <Select
-                    value={field.state.value}
-                    onValueChange={(value: string) => field.handleChange(value)}
+                    value={field.value}
+                    onValueChange={(value: string) => field.onChange(value)}
                   >
-                    <SelectTrigger id={field.name} className="w-full">
+                    <SelectTrigger id="assigneeId" className="w-full">
                       <SelectValue placeholder="Select a team member to assign this task" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subordinates.map((user) => (
+                      {assigneeOptions.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
-                          {user.name} ({user.role})
+                          {user.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </FormField>
               )}
-            </form.Field>
+            />
           </FormSection>
 
           <Separator />
 
           <FormSection icon={Tag} title="Classification">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <form.Field name="priority">
-                {(field) => (
-                  <FormField icon={Flag} label="Priority" field={field}>
+              <Controller
+                name="priority"
+                control={control}
+                render={({ field }) => (
+                  <FormField
+                    icon={Flag}
+                    label="Priority"
+                    error={errors.priority?.message}
+                  >
                     <Select
-                      value={field.state.value}
-                      onValueChange={(value: string) => field.handleChange(value as TaskPriority)}
+                      value={field.value}
+                      onValueChange={(value: string) =>
+                        field.onChange(value as TaskPriority)
+                      }
                     >
-                      <SelectTrigger id={field.name} className="w-full">
+                      <SelectTrigger id="priority" className="w-full">
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>
@@ -198,16 +223,24 @@ export function TaskForm({ taskId }: TaskFormProps) {
                     </Select>
                   </FormField>
                 )}
-              </form.Field>
+              />
 
-              <form.Field name="category">
-                {(field) => (
-                  <FormField icon={Tag} label="Category" field={field}>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <FormField
+                    icon={Tag}
+                    label="Category"
+                    error={errors.category?.message}
+                  >
                     <Select
-                      value={field.state.value}
-                      onValueChange={(value: string) => field.handleChange(value as TaskCategory)}
+                      value={field.value}
+                      onValueChange={(value: string) =>
+                        field.onChange(value as TaskCategory)
+                      }
                     >
-                      <SelectTrigger id={field.name} className="w-full">
+                      <SelectTrigger id="category" className="w-full">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -220,19 +253,21 @@ export function TaskForm({ taskId }: TaskFormProps) {
                     </Select>
                   </FormField>
                 )}
-              </form.Field>
+              />
             </div>
           </FormSection>
 
           <Separator />
 
           <FormSection icon={Calendar} title="Timeline">
-            <form.Field name="dueDate">
-              {(field) => (
-                <FormField icon={Calendar} label="Due Date" field={field}>
+            <Controller
+              name="dueDate"
+              control={control}
+              render={({ field }) => (
+                <FormField icon={Calendar} label="Due Date">
                   <DatePicker
-                    value={field.state.value}
-                    onChange={(value) => field.handleChange(value)}
+                    value={field.value || undefined}
+                    onChange={(value) => field.onChange(value ?? "")}
                     placeholder="Select a due date (optional)"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -240,7 +275,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
                   </p>
                 </FormField>
               )}
-            </form.Field>
+            />
           </FormSection>
 
           <Separator />
@@ -261,8 +296,8 @@ export function TaskForm({ taskId }: TaskFormProps) {
               {isSubmitting
                 ? "Saving..."
                 : taskId
-                ? "Update Task"
-                : "Create Task"}
+                  ? "Update Task"
+                  : "Create Task"}
             </Button>
           </div>
         </form>

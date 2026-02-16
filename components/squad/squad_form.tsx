@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 import {
   Users,
   Crown,
@@ -8,26 +8,27 @@ import {
   Save,
   Check,
   Loader2,
-  Trash2
+  Trash2,
 } from "lucide-react";
+import { Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormError } from "@/components/form_error";
 import { RoleBuilder } from "@/components/squad/role_builder";
 import type { RoleDefinition } from "@/components/squad/role_builder";
 import { TechStackSelect } from "@/components/squad/tech_stack_select";
 import { UserSelect } from "@/components/squad/user_select";
 import { SquadPreview } from "@/components/squad/preview_card";
-import type { SquadFormValues } from '@/hooks/useSquadCreate';
+import type { UseFormReturn } from "react-hook-form";
+import type { SquadFormValues } from "@/hooks/useSquadCreate";
 
 interface SquadFormProps {
-  form: {
-    Field: <TName extends keyof SquadFormValues>(props: { name: TName; children: (field: { state: { value: SquadFormValues[TName]; meta: { errors?: unknown[] } }; handleChange: (value: SquadFormValues[TName] | ((prev: SquadFormValues[TName]) => SquadFormValues[TName])) => void; handleBlur: () => void; name: TName } & Record<string, unknown>) => React.ReactNode }) => React.ReactElement;
-    Subscribe: <TSelected>(props: { selector: (state: { values: SquadFormValues; isSubmitting: boolean }) => TSelected; children: (selected: TSelected) => React.ReactNode }) => React.ReactElement;
-    handleSubmit: () => void;
-  } & Record<string, unknown>;
+  form: UseFormReturn<SquadFormValues>;
+  onSubmit: (data: SquadFormValues) => void;
+  isSubmitting: boolean;
   isEditing: boolean;
   roleDefinitions: readonly RoleDefinition[];
   roleColors: Record<string, string>;
@@ -35,22 +36,53 @@ interface SquadFormProps {
 
 export type { SquadFormProps };
 
-export function SquadForm({ form, isEditing, roleDefinitions, roleColors }: SquadFormProps) {
+export function SquadForm({
+  form,
+  onSubmit,
+  isSubmitting,
+  isEditing,
+  roleDefinitions,
+  roleColors,
+}: SquadFormProps) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = form;
+  const values = watch();
+
   return (
     <div className="min-h-screen pb-24">
-      {/* Header */}
       <header className="bg-background/50 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-foreground/60">
-            <Link href="/dashboard" className="hover:text-foreground cursor-pointer">Dashboard</Link>
+            <Link
+              href="/dashboard"
+              className="hover:text-foreground cursor-pointer"
+            >
+              Dashboard
+            </Link>
             <span>/</span>
-            <Link href="/squads" className="hover:text-foreground cursor-pointer">Squads</Link>
+            <Link
+              href="/squads"
+              className="hover:text-foreground cursor-pointer"
+            >
+              Squads
+            </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">{isEditing ? "Edit Squad" : "Create Squad"}</span>
+            <span className="text-foreground font-medium">
+              {isEditing ? "Edit Squad" : "Create Squad"}
+            </span>
           </div>
 
           {isEditing && (
-            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Squad
             </Button>
@@ -60,157 +92,152 @@ export function SquadForm({ form, isEditing, roleDefinitions, roleColors }: Squa
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{isEditing ? "Edit Squad" : "Create New Squad"}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {isEditing ? "Edit Squad" : "Create New Squad"}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            {isEditing ? "Update team details, roles, and composition." : "Build a cross-functional team for your next big project."}
+            {isEditing
+              ? "Update team details, roles, and composition."
+              : "Build a cross-functional team for your next big project."}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* Left Panel: Form */}
           <div className="lg:col-span-7 space-y-8">
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                form.handleSubmit();
-              }}
+              id="squad-form"
+              onSubmit={handleSubmit(onSubmit)}
               className="space-y-8"
             >
-
-              {/* Section 1: Squad Basics */}
               <section className="space-y-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2">
                     <Users className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground">Squad Basics</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Squad Basics
+                  </h2>
                 </div>
 
                 <Card className="border-none shadow-card bg-card/80 backdrop-blur-sm">
                   <CardContent className="pt-6">
                     <div className="grid gap-6">
-                      <form.Field name="squadName">
-                        {(field) => (
-                          <div className="space-y-2">
-                            <Label htmlFor="squadName">Squad Name</Label>
-                            <Input
-                              id="squadName"
-                              placeholder="e.g., Mobile App Alpha Team"
-                              className="h-12 bg-background/50"
-                              value={field.state.value}
-                              onBlur={field.handleBlur}
-                              onChange={(e) => field.handleChange(e.target.value)}
-                            />
-                            {field.state.meta.errors ? (
-                              <p className="text-sm text-destructive">{field.state.meta.errors.join(', ')}</p>
-                            ) : null}
-                          </div>
-                        )}
-                      </form.Field>
+                      <div className="space-y-2">
+                        <Label htmlFor="squadName">Squad Name</Label>
+                        <Input
+                          id="squadName"
+                          placeholder="e.g., Mobile App Alpha Team"
+                          className="h-12 bg-background/50"
+                          aria-invalid={Boolean(errors.squadName)}
+                          {...register("squadName")}
+                        />
+                        <FormError message={errors.squadName?.message} />
+                      </div>
 
-                      <form.Field name="techStack">
-                        {(field) => (
+                      <Controller
+                        name="techStack"
+                        control={control}
+                        render={({ field }) => (
                           <div className="space-y-2">
                             <Label>Project / Technology Stack</Label>
                             <TechStackSelect
-                              value={field.state.value}
-                              onChange={field.handleChange}
+                              value={field.value}
+                              onChange={field.onChange}
                             />
-                            {field.state.meta.errors ? (
-                              <p className="text-sm text-destructive">{field.state.meta.errors.join(', ')}</p>
-                            ) : null}
+                            <FormError message={errors.techStack?.message} />
                           </div>
                         )}
-                      </form.Field>
+                      />
 
-                      <form.Field name="squadDescription">
-                        {(field) => (
-                          <div className="space-y-2">
-                            <Label htmlFor="squadDescription">Squad Mission</Label>
-                            <Textarea
-                              id="squadDescription"
-                              placeholder="Describe the squad's goals and objectives..."
-                              className="min-h-[120px] resize-none bg-background/50"
-                              value={field.state.value}
-                              onBlur={field.handleBlur}
-                              onChange={(e) => field.handleChange(e.target.value)}
-                            />
-                            <p className="text-xs text-foreground/70 text-right">{field.state.value?.length || 0}/500 characters</p>
-                          </div>
-                        )}
-                      </form.Field>
+                      <div className="space-y-2">
+                        <Label htmlFor="squadDescription">Squad Mission</Label>
+                        <Textarea
+                          id="squadDescription"
+                          placeholder="Describe the squad's goals and objectives..."
+                          className="min-h-[120px] resize-none bg-background/50"
+                          {...register("squadDescription")}
+                        />
+                        <p className="text-xs text-foreground/70 text-right">
+                          {values.squadDescription?.length || 0}/500 characters
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               </section>
 
-              {/* Section 2: Leadership */}
               <section className="space-y-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2">
                     <Crown className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground">Squad Leadership</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Squad Leadership
+                  </h2>
                 </div>
 
                 <Card className="border-none shadow-card bg-card/80 backdrop-blur-sm">
                   <CardContent className="pt-6">
-                    <form.Field name="squadLeader">
-                      {(field) => (
+                    <Controller
+                      name="squadLeader"
+                      control={control}
+                      render={({ field }) => (
                         <div className="space-y-2">
                           <Label>Squad Lead / Tech Lead</Label>
                           <UserSelect
-                            value={field.state.value}
-                            onChange={field.handleChange}
+                            value={field.value}
+                            onChange={field.onChange}
                           />
-                          {field.state.meta.errors ? (
-                            <p className="text-sm text-destructive">{field.state.meta.errors.join(', ')}</p>
-                          ) : null}
+                          <FormError message={errors.squadLeader?.message} />
                         </div>
                       )}
-                    </form.Field>
+                    />
                   </CardContent>
                 </Card>
               </section>
 
-              {/* Section 3: Team Composition */}
               <section className="space-y-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2">
                     <Puzzle className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground">Team Composition</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Team Composition
+                  </h2>
                 </div>
 
                 <Card className="border-none shadow-card bg-card/80 backdrop-blur-sm">
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       <Label>Required Roles</Label>
-                      <p className="text-sm text-foreground/70 mb-4">Define the structure of your squad by adding role slots.</p>
+                      <p className="text-sm text-foreground/70 mb-4">
+                        Define the structure of your squad by adding role slots.
+                      </p>
 
-                      <form.Field name="roles">
-                        {(field) => (
+                      <Controller
+                        name="roles"
+                        control={control}
+                        render={({ field }) => (
                           <RoleBuilder
-                            value={field.state.value}
-                            onChange={field.handleChange}
+                            value={field.value}
+                            onChange={field.onChange}
                             roleDefinitions={roleDefinitions}
                           />
                         )}
-                      </form.Field>
+                      />
                     </div>
                   </CardContent>
                 </Card>
               </section>
 
-              {/* Section 4: Member Assignment (Optional) */}
               <section className="space-y-4 opacity-60 hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 rounded-lg ">
                     <UserPlus className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground">Assign Members (Optional)</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Assign Members (Optional)
+                  </h2>
                 </div>
 
                 <Card className="border-none shadow-card border-dashed border-2 border-border bg-card/40 backdrop-blur-sm">
@@ -218,37 +245,39 @@ export function SquadForm({ form, isEditing, roleDefinitions, roleColors }: Squa
                     <div className="bg-muted/50 p-4 rounded-full mb-4">
                       <Users className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-medium">Auto-Assignment Available</h3>
+                    <h3 className="text-lg font-medium">
+                      Auto-Assignment Available
+                    </h3>
                     <p className="text-foreground/70 max-w-md mt-2 mb-6">
-                      You can assign specific members later, or let our AI suggest the best team based on your requirements.
+                      You can assign specific members later, or let our AI
+                      suggest the best team based on your requirements.
                     </p>
-                    <Button type="button" variant="outline" className="border-accent text-accent-foreground hover:bg-accent/10">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-accent text-accent-foreground hover:bg-accent/10"
+                    >
                       Enable AI Auto-Assign
                     </Button>
                   </CardContent>
                 </Card>
               </section>
-
             </form>
           </div>
 
-          {/* Right Panel: Preview */}
           <div className="hidden lg:block lg:col-span-5">
-            <form.Subscribe
-              selector={(state: { values: SquadFormValues }) => state.values}
-            >
-              {(values: SquadFormValues) => (
-                <SquadPreview values={values} roleColors={roleColors} />
-              )}
-            </form.Subscribe>
+            <SquadPreview values={values} roleColors={roleColors} />
           </div>
         </div>
       </main>
 
-      {/* Footer Actions */}
       <div className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border z-50 py-4 shadow-lg">
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground" asChild>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+            asChild
+          >
             <Link href="/dashboard">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Cancel
@@ -256,37 +285,32 @@ export function SquadForm({ form, isEditing, roleDefinitions, roleColors }: Squa
           </Button>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="border-accent text-accent-foreground hover:bg-accent/10">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-accent text-accent-foreground hover:bg-accent/10"
+            >
               <Save className="w-4 h-4 mr-2" />
               Save Draft
             </Button>
-            <form.Subscribe
-              selector={(state: { isSubmitting: boolean }) => state.isSubmitting}
+            <Button
+              type="submit"
+              form="squad-form"
+              disabled={isSubmitting}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[140px]"
             >
-              {(isSubmitting: boolean) => (
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    form.handleSubmit();
-                  }}
-                  disabled={isSubmitting}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[140px]"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {isEditing ? "Updating..." : "Creating..."}
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      {isEditing ? "Update Squad" : "Create Squad"}
-                    </>
-                  )}
-                </Button>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {isEditing ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  {isEditing ? "Update Squad" : "Create Squad"}
+                </>
               )}
-            </form.Subscribe>
+            </Button>
           </div>
         </div>
       </div>

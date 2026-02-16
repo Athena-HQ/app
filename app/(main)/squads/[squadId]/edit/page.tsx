@@ -1,7 +1,7 @@
 "use client";
 
 import { useSquadCreate, fetchSquadForEdit } from "@/hooks/useSquadCreate";
-import { SquadForm, type SquadFormProps } from "@/components/squad/squad_form";
+import { SquadForm } from "@/components/squad/squad_form";
 import {
   Briefcase,
   Code,
@@ -38,7 +38,9 @@ export default function EditSquadPage({
     enabled: Boolean(params.squadId),
   });
 
-  const { form } = useSquadCreate(initialValues ?? undefined);
+  const { form, onSubmit, isSubmitting } = useSquadCreate(
+    initialValues ?? undefined
+  );
   const isEditing = true;
 
   if (isLoading || !initialValues) {
@@ -47,7 +49,9 @@ export default function EditSquadPage({
 
   return (
     <SquadForm
-      form={form as unknown as SquadFormProps["form"]}
+      form={form}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
       isEditing={isEditing}
       roleDefinitions={roleDefinitions}
       roleColors={roleColors}

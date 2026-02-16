@@ -35,6 +35,11 @@ export const ROUTES_INFO: { path: string; description: string; href: string }[] 
     href: "/squads/1/edit",
   },
   {
+    path: "/my-squad",
+    description: "My Squad: squad details, members, and tasks (Senior/Junior Engineer).",
+    href: "/my-squad",
+  },
+  {
     path: "/tasks",
     description: "Task list and filters.",
     href: "/tasks",

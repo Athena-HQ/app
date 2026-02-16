@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getEmployees } from "@/services/company";
 
 const INVITER_ROLES = ["ceo", "hr"];
+const ENGINEER_ROLES = ["senior engineer", "junior engineer"];
 
 export function useCurrentUserRole() {
   const { user } = useAuth();
@@ -17,6 +18,8 @@ export function useCurrentUserRole() {
   const role = currentEmployee?.role?.toLowerCase() ?? null;
   const canInviteEmployees =
     role !== null && INVITER_ROLES.includes(role);
+  const canSeeMySquad =
+    role !== null && ENGINEER_ROLES.includes(role);
 
-  return { role, canInviteEmployees, isLoading };
+  return { role, canInviteEmployees, canSeeMySquad, isLoading };
 }

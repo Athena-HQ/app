@@ -1,5 +1,7 @@
-import { useForm } from "@tanstack/react-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -69,35 +71,48 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
     },
   });
 
-  const onSubmit = async ({
-    value,
-    squadId,
-  }: {
-    value: SquadFormValues;
-    squadId?: number;
-  }) => {
-    if (squadId != null) {
-      await updateMutation.mutateAsync({ id: squadId, data: value });
-    } else {
-      await createMutation.mutateAsync(value);
-    }
-  };
-
-  const form = useForm({
+  const form = useForm<SquadFormValues>({
+    resolver: zodResolver(squadSchema),
     defaultValues: {
       squadName: initialValues?.squadName ?? "",
       squadDescription: initialValues?.squadDescription ?? "",
-      techStack: initialValues?.techStack ?? ([] as string[]),
+      techStack: initialValues?.techStack ?? [],
       squadLeader: initialValues?.squadLeader ?? "",
-      roles: initialValues?.roles ?? ({} as Record<string, number>),
-    },
-    onSubmit: async ({ value }) => {
-      await onSubmit({ value, squadId });
+      roles: initialValues?.roles ?? {},
     },
   });
 
+  useEffect(() => {
+    if (initialValues?.squadId != null) {
+      form.reset({
+        squadName: initialValues.squadName ?? "",
+        squadDescription: initialValues.squadDescription ?? "",
+        techStack: initialValues.techStack ?? [],
+        squadLeader: initialValues.squadLeader ?? "",
+        roles: initialValues.roles ?? {},
+      });
+    }
+  }, [
+    initialValues?.squadId,
+    initialValues?.squadName,
+    initialValues?.squadDescription,
+    initialValues?.techStack,
+    initialValues?.squadLeader,
+    initialValues?.roles,
+    form,
+  ]);
+
+  const onSubmit = (data: SquadFormValues) => {
+    if (squadId != null) {
+      updateMutation.mutate({ id: squadId, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   return {
     form,
+    onSubmit,
     isSubmitting: createMutation.isPending || updateMutation.isPending,
   };
 }

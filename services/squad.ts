@@ -52,6 +52,11 @@ export const listSquads = async (): Promise<SquadListResponse[]> => {
   return Array.isArray(response) ? response : [];
 };
 
+export const getMySquads = async (): Promise<SquadListResponse[]> => {
+  const response = await api.get<SquadListResponse[]>("/squads/my_squads/");
+  return Array.isArray(response) ? response : [];
+};
+
 export const getSquad = async (id: number): Promise<SquadResponse> => {
   const response = await api.get<SquadResponse>(`/squads/${id}/`);
   return response;

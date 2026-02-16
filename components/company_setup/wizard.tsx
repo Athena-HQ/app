@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CompanyInfoStep, type CompanyInfoStepProps } from "./company_info_step";
-import { DecisionMakerStep, type DecisionMakerStepProps } from "./decision_maker_step";
+import { CompanyInfoStep } from "./company_info_step";
+import { DecisionMakerStep } from "./decision_maker_step";
 import { ConfirmationStep } from "./confirmation_step";
 import { useCompanySetup } from "@/hooks/useCompanySetup";
 
@@ -21,11 +21,11 @@ export function Wizard() {
     submitError,
     isSuccess,
     validateStep,
-    validateField,
-    errors,
+    getValues,
   } = useCompanySetup();
 
   const router = useRouter();
+  const { register, formState } = form;
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -64,9 +64,8 @@ export function Wizard() {
             transition={{ duration: 0.3 }}
           >
             <CompanyInfoStep
-              form={form as unknown as CompanyInfoStepProps["form"]}
-              errors={errors}
-              onBlur={validateField}
+              register={register}
+              errors={formState.errors}
             />
           </motion.div>
         );
@@ -80,9 +79,8 @@ export function Wizard() {
             transition={{ duration: 0.3 }}
           >
             <DecisionMakerStep
-              form={form as unknown as DecisionMakerStepProps["form"]}
-              errors={errors}
-              onBlur={validateField}
+              register={register}
+              errors={formState.errors}
             />
           </motion.div>
         );
@@ -96,7 +94,7 @@ export function Wizard() {
             transition={{ duration: 0.3 }}
           >
             <ConfirmationStep
-              formData={form.state.values}
+              formData={getValues()}
               isSuccess={isSuccess}
             />
           </motion.div>
@@ -118,8 +116,8 @@ export function Wizard() {
                     step === currentStep
                       ? "border-primary bg-primary text-primary-foreground"
                       : step < currentStep
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-muted bg-background text-muted-foreground"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-muted bg-background text-muted-foreground"
                   }`}
                 >
                   {step}

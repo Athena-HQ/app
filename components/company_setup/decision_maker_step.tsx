@@ -1,21 +1,17 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
+import type { UseFormRegister, FieldErrors } from "react-hook-form";
+import type { CompanySetupForm } from "@/lib/validations/company_setup";
 
 export interface DecisionMakerStepProps {
-  form: {
-    Field: <TName extends "fullName" | "email" | "password" | "confirmPassword">(props: { name: TName; children: (field: { state: { value: string }; handleChange: (value: string) => void; handleBlur: () => void; name: TName } & Record<string, unknown>) => React.ReactNode }) => React.ReactElement;
-  };
-  errors: {
-    [key: string]: string | undefined;
-  };
-  onBlur: (fieldName: string) => void;
+  register: UseFormRegister<CompanySetupForm>;
+  errors: FieldErrors<CompanySetupForm>;
 }
 
 export function DecisionMakerStep({
-  form,
+  register,
   errors,
-  onBlur,
 }: DecisionMakerStepProps) {
   return (
     <div className="space-y-6">
@@ -28,125 +24,105 @@ export function DecisionMakerStep({
 
       <div className="space-y-4 max-w-md mx-auto">
         <div className="flex gap-2">
-          <form.Field name="fullName">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  placeholder="John Doe"
-                  value={typeof field.state.value === "string" ? field.state.value : ""}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={() => onBlur("fullName")}
-                  size="lg"
-                />
-                <AnimatePresence mode="wait">
-                  {errors.fullName && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-xs text-destructive"
-                    >
-                      {errors.fullName}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </form.Field>
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input
+              id="fullName"
+              placeholder="John Doe"
+              size="lg"
+              aria-invalid={Boolean(errors.fullName)}
+              {...register("fullName")}
+            />
+            <AnimatePresence mode="wait">
+              {errors.fullName?.message && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs text-destructive"
+                >
+                  {errors.fullName.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
 
-          <form.Field name="email">
-            {(field) => (
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john@acme.com"
-                  value={typeof field.state.value === "string" ? field.state.value : ""}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={() => onBlur("email")}
-                  size="lg"
-                />
-                <AnimatePresence mode="wait">
-                  {errors.email && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-xs text-destructive"
-                    >
-                      {errors.email}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </form.Field>
+          <div className="space-y-2 flex-1">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="john@acme.com"
+              size="lg"
+              aria-invalid={Boolean(errors.email)}
+              {...register("email")}
+            />
+            <AnimatePresence mode="wait">
+              {errors.email?.message && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs text-destructive"
+                >
+                  {errors.email.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        <form.Field name="password">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={typeof field.state.value === "string" ? field.state.value : ""}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={() => onBlur("password")}
-                size="lg"
-              />
-              <AnimatePresence mode="wait">
-                {errors.password && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-xs text-destructive"
-                  >
-                    {errors.password}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </form.Field>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            size="lg"
+            aria-invalid={Boolean(errors.password)}
+            {...register("password")}
+          />
+          <AnimatePresence mode="wait">
+            {errors.password?.message && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-destructive"
+              >
+                {errors.password.message}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
 
-        <form.Field name="confirmPassword">
-          {(field) => (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={typeof field.state.value === "string" ? field.state.value : ""}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onBlur={() => onBlur("confirmPassword")}
-                size="lg"
-              />
-              <AnimatePresence mode="wait">
-                {errors.confirmPassword && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-xs text-destructive"
-                  >
-                    {errors.confirmPassword}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </form.Field>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            size="lg"
+            aria-invalid={Boolean(errors.confirmPassword)}
+            {...register("confirmPassword")}
+          />
+          <AnimatePresence mode="wait">
+            {errors.confirmPassword?.message && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-xs text-destructive"
+              >
+                {errors.confirmPassword.message}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

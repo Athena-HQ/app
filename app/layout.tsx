@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import { QueryClientProvider } from "@/providers/query-provider";
@@ -26,16 +27,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background!`}
       >
-        <QueryClientProvider>
-          <AuthProvider>
-            {children}
-            <Toaster richColors />
-          </AuthProvider>
-        </QueryClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <QueryClientProvider>
+            <AuthProvider>
+              {children}
+              <Toaster richColors />
+            </AuthProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

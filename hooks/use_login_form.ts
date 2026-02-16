@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -11,57 +12,42 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
-
-// Helper function to properly validate with Zod and return string errors
-function validateWithZod(value: LoginFormData) {
-  const result = loginSchema.safeParse(value);
-  if (result.success) {
-    return undefined;
-  }
-
-  // Extract the first error message for each field
-  const fieldErrors: Record<string, string> = {};
-  result.error.issues.forEach((issue) => {
-    const fieldName = issue.path[0] as string;
-    if (!fieldErrors[fieldName]) {
-      fieldErrors[fieldName] = issue.message;
-    }
-  });
-
-  return fieldErrors;
-}
+export type LoginFormData = z.infer<typeof loginSchema>;
 
 export function useLoginForm(initialEmail?: string) {
   const { login } = useAuth();
-  const form = useForm({
+
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: initialEmail ?? "",
       password: "",
-    } as LoginFormData,
-    onSubmit: async ({ value }) => {
-      try {
-        await login({
-          email: value.email,
-          password: value.password,
-        });
-        toast.success("Login successful");
-      } catch (error) {
-        if (error instanceof ApiError) {
-          const errorMessage =
-            error.message || "Invalid email or password. Please try again.";
-          toast.error(errorMessage);
-        } else {
-          toast.error("An unexpected error occurred. Please try again.");
-        }
-        throw error;
-      }
-    },
-    validators: {
-      onSubmit: ({ value }) => validateWithZod(value),
-      onBlur: ({ value }) => validateWithZod(value),
     },
   });
 
-  return form;
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await login({
+        email: data.email,
+        password: data.password,
+      });
+      toast.success("Login successful");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const errorMessage =
+          error.message || "Invalid email or password. Please try again.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+      throw error;
+    }
+  };
+
+  return {
+    register: form.register,
+    handleSubmit: form.handleSubmit,
+    formState: form.formState,
+    onSubmit,
+  };
 }

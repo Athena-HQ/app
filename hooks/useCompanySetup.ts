@@ -1,26 +1,30 @@
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  companyInfoSchema,
-  decisionMakerSchema,
+  companySetupSchema,
   type CompanySetupForm,
 } from "@/lib/validations/company_setup";
 import { createCompany } from "@/services/company";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/api-util";
 
-type ValidationErrors = {
-  [key: string]: string | undefined;
-};
+const STEP_1_FIELDS = ["companyName", "companyIdentifier"] as const;
+const STEP_2_FIELDS = [
+  "fullName",
+  "email",
+  "password",
+  "confirmPassword",
+] as const;
 
 export const useCompanySetup = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [errors, setErrors] = useState<ValidationErrors>({});
 
-  const form = useForm({
+  const form = useForm<CompanySetupForm>({
+    resolver: zodResolver(companySetupSchema),
     defaultValues: {
       companyName: "",
       companyIdentifier: "",
@@ -28,124 +32,20 @@ export const useCompanySetup = () => {
       email: "",
       password: "",
       confirmPassword: "",
-    } as CompanySetupForm,
+    },
+    mode: "onTouched",
   });
 
-  const validateField = (fieldName: string) => {
-    const values = form.state.values;
-
-    if (currentStep === 1) {
-      const result = companyInfoSchema.safeParse({
-        companyName: values.companyName,
-        companyIdentifier: values.companyIdentifier,
-      });
-
-      if (!result.success) {
-        const fieldError = result.error.issues.find(
-          (error) => error.path[0] === fieldName
-        );
-
-        if (fieldError) {
-          setErrors((prev) => ({
-            ...prev,
-            [fieldName]: fieldError.message,
-          }));
-        } else {
-          setErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors[fieldName];
-            return newErrors;
-          });
-        }
-      } else {
-        setErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[fieldName];
-          return newErrors;
-        });
-      }
-    }
-
-    if (currentStep === 2) {
-      const result = decisionMakerSchema.safeParse({
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        confirmPassword: values.confirmPassword,
-      });
-
-      if (!result.success) {
-        const fieldError = result.error.issues.find(
-          (error) => error.path[0] === fieldName
-        );
-
-        if (fieldError) {
-          setErrors((prev) => ({
-            ...prev,
-            [fieldName]: fieldError.message,
-          }));
-        } else {
-          setErrors((prev) => {
-            const newErrors = { ...prev };
-            delete newErrors[fieldName];
-            return newErrors;
-          });
-        }
-      } else {
-        setErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[fieldName];
-          return newErrors;
-        });
-      }
-    }
-  };
+  const { trigger, getValues, formState } = form;
+  const errors = formState.errors;
 
   const validateStep = async (step: number): Promise<boolean> => {
-    const values = form.state.values;
-
     if (step === 1) {
-      const result = companyInfoSchema.safeParse({
-        companyName: values.companyName,
-        companyIdentifier: values.companyIdentifier,
-      });
-
-      if (!result.success) {
-        const newErrors: ValidationErrors = {};
-        result.error.issues.forEach((error) => {
-          const path = error.path[0] as string;
-          newErrors[path] = error.message;
-        });
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
+      return trigger(STEP_1_FIELDS);
     }
-
     if (step === 2) {
-      const result = decisionMakerSchema.safeParse({
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        confirmPassword: values.confirmPassword,
-      });
-
-      if (!result.success) {
-        const newErrors: ValidationErrors = {};
-        result.error.issues.forEach((error) => {
-          const path = error.path[0] as string;
-          newErrors[path] = error.message;
-        });
-        setErrors(newErrors);
-        return false;
-      }
-
-      setErrors({});
-      return true;
+      return trigger(STEP_2_FIELDS);
     }
-
     return true;
   };
 
@@ -163,11 +63,14 @@ export const useCompanySetup = () => {
   };
 
   const submitForm = async () => {
+    const isValid = await validateStep(2);
+    if (!isValid) return;
+
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      const values = form.state.values;
+      const values = getValues();
       const response = await createCompany({
         companyName: values.companyName,
         companyIdentifier: values.companyIdentifier,
@@ -177,7 +80,7 @@ export const useCompanySetup = () => {
         phone_number: "",
         country: "",
         city: "",
-        postal_code: ""
+        postal_code: "",
       });
 
       if (response.requiresVerification) {
@@ -208,6 +111,15 @@ export const useCompanySetup = () => {
     }
   };
 
+  const stepErrors: Record<string, string | undefined> = {
+    companyName: errors.companyName?.message,
+    companyIdentifier: errors.companyIdentifier?.message,
+    fullName: errors.fullName?.message,
+    email: errors.email?.message,
+    password: errors.password?.message,
+    confirmPassword: errors.confirmPassword?.message,
+  };
+
   return {
     form,
     currentStep,
@@ -218,7 +130,7 @@ export const useCompanySetup = () => {
     submitError,
     isSuccess,
     validateStep,
-    validateField,
-    errors,
+    errors: stepErrors,
+    getValues,
   };
 };
