@@ -1,7 +1,5 @@
 const getApiBaseUrl = (): string => {
-
-
-  return "https://admin-athena-hq.it.com";
+  return "https://admin.athena-hq.it.com";
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -14,7 +12,7 @@ class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public statusText: string
+    public statusText: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -23,7 +21,7 @@ class ApiError extends Error {
 
 async function fetchWithTimeout(
   url: string,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
 ): Promise<Response> {
   const { timeout = 10000, ...init } = config;
 
@@ -57,9 +55,11 @@ export function setUnauthorizedHandler(handler: () => void) {
 
 export async function apiRequest<T = unknown>(
   endpoint: string,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
 ): Promise<T> {
-  const baseUrl = API_BASE_URL.endsWith("/") ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const baseUrl = API_BASE_URL.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${baseUrl}${path}`;
 
@@ -118,21 +118,33 @@ export const api = {
   get: <T = unknown>(endpoint: string, config?: RequestConfig) =>
     apiRequest<T>(endpoint, { ...config, method: "GET" }),
 
-  post: <T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig) =>
+  post: <T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    config?: RequestConfig,
+  ) =>
     apiRequest<T>(endpoint, {
       ...config,
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     }),
 
-  put: <T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig) =>
+  put: <T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    config?: RequestConfig,
+  ) =>
     apiRequest<T>(endpoint, {
       ...config,
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     }),
 
-  patch: <T = unknown>(endpoint: string, data?: unknown, config?: RequestConfig) =>
+  patch: <T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    config?: RequestConfig,
+  ) =>
     apiRequest<T>(endpoint, {
       ...config,
       method: "PATCH",
