@@ -1,4 +1,5 @@
 import { api, ApiError } from "@/lib/api/api-util";
+import { setTokens, clearTokens } from "@/lib/auth/token-store";
 
 export interface LoginRequest {
   email: string;
@@ -6,11 +7,14 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user?: {
+  access: string;
+  refresh: string;
+  user: {
     pk: number;
     email: string;
     first_name: string;
     last_name: string;
+    username: string;
   };
 }
 
@@ -41,6 +45,7 @@ export const login = async (
       "/authentication/login/",
       data
     );
+    setTokens(response.access, response.refresh);
     return response;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -68,6 +73,7 @@ export const signup = async (
 };
 
 export const logout = async (): Promise<void> => {
+  clearTokens();
   try {
     await api.post("/authentication/logout/");
   } catch (error) {

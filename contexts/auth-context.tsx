@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, login as loginApi, logout as logoutApi, type LoginRequest, type UserResponse } from "@/services/auth";
 import { setUnauthorizedHandler } from "@/lib/api/api-util";
+import { clearTokens } from "@/lib/auth/token-store";
 
 interface AuthContextType {
   user: UserResponse | null;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
+      clearTokens();
       const pathname =
         typeof window !== "undefined" ? window.location.pathname : "";
       const publicPrefixes = ["/login", "/join", "/onboarding", "/verify"];
@@ -51,9 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: loginApi,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth", "user"] });
-    },
   });
 
   const logoutMutation = useMutation({
@@ -65,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (credentials: LoginRequest) => {
-    await loginMutation.mutateAsync(credentials);
-    await refetch();
+    const response = await loginMutation.mutateAsync(credentials);
+    queryClient.setQueryData(["auth", "user"], response.user);
   };
 
   const logout = async () => {

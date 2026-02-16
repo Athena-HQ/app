@@ -1,3 +1,10 @@
+import {
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens,
+} from "@/lib/auth/token-store";
+
 export const getApiBaseUrl = (): string => {
   if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -22,6 +29,18 @@ class ApiError extends Error {
   }
 }
 
+function buildHeaders(init: RequestConfig): HeadersInit {
+  const access = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init.headers as Record<string, string>),
+  };
+  if (access) {
+    headers["Authorization"] = `Bearer ${access}`;
+  }
+  return headers;
+}
+
 async function fetchWithTimeout(
   url: string,
   config: RequestConfig = {},
@@ -36,10 +55,7 @@ async function fetchWithTimeout(
       ...init,
       signal: controller.signal,
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...init.headers,
-      },
+      headers: buildHeaders(config),
     });
 
     clearTimeout(timeoutId);
@@ -90,9 +106,39 @@ export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
 }
 
+let refreshPromise: Promise<string | null> | null = null;
+
+async function performRefresh(): Promise<string | null> {
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
+  const baseUrl = API_BASE_URL.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
+  const url = `${baseUrl}/authentication/token/refresh/`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { access?: string };
+    const access = data?.access;
+    if (access) {
+      setTokens(access, refresh);
+      return access;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiRequest<T = unknown>(
   endpoint: string,
   config: RequestConfig = {},
+  isRetry = false,
 ): Promise<T> {
   const baseUrl = API_BASE_URL.endsWith("/")
     ? API_BASE_URL.slice(0, -1)
@@ -105,6 +151,17 @@ export async function apiRequest<T = unknown>(
 
     if (!response.ok) {
       if (response.status === 401) {
+        if (!isRetry) {
+          if (!refreshPromise) {
+            refreshPromise = performRefresh();
+          }
+          const newAccess = await refreshPromise;
+          refreshPromise = null;
+          if (newAccess) {
+            return apiRequest<T>(endpoint, config, true);
+          }
+        }
+        clearTokens();
         if (onUnauthorized) {
           onUnauthorized();
         } else {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "@tanstack/react-form";
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
@@ -34,7 +33,6 @@ function validateWithZod(value: LoginFormData) {
 }
 
 export function useLoginForm(initialEmail?: string) {
-  const router = useRouter();
   const { login } = useAuth();
   const form = useForm({
     defaultValues: {
@@ -48,7 +46,6 @@ export function useLoginForm(initialEmail?: string) {
           password: value.password,
         });
         toast.success("Login successful");
-        router.push("/dashboard");
       } catch (error) {
         if (error instanceof ApiError) {
           const errorMessage =
