@@ -9,7 +9,7 @@ import { createCompany } from "@/services/company";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api/api-util";
 
-const STEP_1_FIELDS = ["companyName", "companyIdentifier"] as const;
+const STEP_1_FIELDS = ["companyName"] as const;
 const STEP_2_FIELDS = [
   "fullName",
   "email",
@@ -27,7 +27,6 @@ export const useCompanySetup = () => {
     resolver: zodResolver(companySetupSchema),
     defaultValues: {
       companyName: "",
-      companyIdentifier: "",
       fullName: "",
       email: "",
       password: "",
@@ -73,7 +72,6 @@ export const useCompanySetup = () => {
       const values = getValues();
       const response = await createCompany({
         companyName: values.companyName,
-        companyIdentifier: values.companyIdentifier,
         fullName: values.fullName,
         email: values.email,
         password: values.password,
@@ -113,7 +111,6 @@ export const useCompanySetup = () => {
 
   const stepErrors: Record<string, string | undefined> = {
     companyName: errors.companyName?.message,
-    companyIdentifier: errors.companyIdentifier?.message,
     fullName: errors.fullName?.message,
     email: errors.email?.message,
     password: errors.password?.message,
