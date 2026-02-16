@@ -3,8 +3,13 @@ export const ROUTES_INFO: { path: string; description: string; href: string }[] 
   { path: "/login", description: "Sign in.", href: "/login" },
   { path: "/join", description: "Sign up / accept company invite.", href: "/join" },
   {
+    path: "/email-confirmation",
+    description: "Email confirmation (link from verification email).",
+    href: "/email-confirmation",
+  },
+  {
     path: "/verify/[key]",
-    description: "Email verification after signup.",
+    description: "Email verification after signup (legacy path).",
     href: "/verify/demo",
   },
   {

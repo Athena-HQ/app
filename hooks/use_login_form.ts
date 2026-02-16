@@ -33,12 +33,12 @@ function validateWithZod(value: LoginFormData) {
   return fieldErrors;
 }
 
-export function useLoginForm() {
+export function useLoginForm(initialEmail?: string) {
   const router = useRouter();
   const { login } = useAuth();
   const form = useForm({
     defaultValues: {
-      email: "",
+      email: initialEmail ?? "",
       password: "",
     } as LoginFormData,
     onSubmit: async ({ value }) => {

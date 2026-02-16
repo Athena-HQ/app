@@ -10,26 +10,40 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_key:
+    "Verification link is incomplete. Please use the link from your email.",
+  invalid_key:
+    "This verification link is invalid. Please request a new verification email.",
+  expired_or_invalid:
+    "This link is invalid or has expired. Please request a new verification email.",
+  confirmation_error:
+    "Verification failed. Please try again or request a new verification email.",
+};
+
 function SearchParamsHandler() {
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified");
   const message = searchParams.get("message");
+  const status = searchParams.get("status");
 
   useEffect(() => {
     if (verified === "true") {
       toast.success("Email verified successfully! You can now log in.");
-    } else if (message) {
-      if (message === "already_verified") {
-        toast.info("Email already verified. You can log in.");
-      }
+    } else if (message === "already_verified") {
+      toast.info("Email already verified. You can log in.");
+    } else if (status === "error" && message && ERROR_MESSAGES[message]) {
+      toast.error(ERROR_MESSAGES[message]);
     }
-  }, [verified, message]);
+  }, [verified, message, status]);
 
   return null;
 }
 
 export default function LoginPage() {
-  const form = useLoginForm();
+  const searchParams = useSearchParams();
+  const emailParam = searchParams.get("email");
+  const form = useLoginForm(emailParam ?? undefined);
 
   return (
     <div className=" flex items-center justify-center w-full">

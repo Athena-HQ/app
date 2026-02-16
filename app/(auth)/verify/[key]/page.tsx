@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/api/api-util";
 
 export default function VerifyPage() {
   const params = useParams();
@@ -17,9 +18,9 @@ export default function VerifyPage() {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://admin-athena-hq.it.com";
+        const base = getApiBaseUrl().replace(/\/$/, "");
         const response = await fetch(
-          `${API_BASE_URL}/authentication/verify/${key}/`,
+          `${base}/authentication/verify/?key=${encodeURIComponent(key)}`,
           {
             method: "GET",
             credentials: "include",

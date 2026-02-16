@@ -1,4 +1,7 @@
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
+  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
   return "https://admin.athena-hq.it.com";
 };
 
