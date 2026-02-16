@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -66,7 +66,9 @@ export default function AuthLayout({
             priority
           />
         </div>
-        {children}
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );
