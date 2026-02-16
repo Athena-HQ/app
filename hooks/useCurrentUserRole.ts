@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { getEmployees } from "@/services/company";
 
-const INVITER_ROLES = ["ceo", "hr"];
+const INVITER_ROLES = ["ceo", "hr", "company manager"];
 const ENGINEER_ROLES = ["senior engineer", "junior engineer"];
 
 export function useCurrentUserRole() {
