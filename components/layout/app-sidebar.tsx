@@ -126,6 +126,7 @@ const data = {
 const managementItems = [
   { title: "My Company", url: "/company", icon: RiBuilding2Line, companyOrgOnly: true },
   { title: "Invite Employees", url: "/invite", icon: RiMailLine, inviteOnly: true },
+  { title: "My Company", url: "/my-company", icon: RiTeamLine, inviteOnly: false },
   { title: "Squads", url: "/squads", icon: RiGroupLine, inviteOnly: false },
 ];
 
