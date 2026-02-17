@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import type { TaskResponse, TaskPriority } from "@/services/task";
-import { getCurrentUser } from "@/services/hierarchy";
+import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { useTaskStatusUpdate } from "@/hooks/useTaskStatusUpdate";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -61,7 +61,7 @@ function formatDistanceToNow(date: Date): string {
 }
 
 export function TaskDetails({ task }: TaskDetailsProps) {
-  const currentUser = getCurrentUser();
+  const { appUser } = useCurrentAppUser();
   const assigneeName = appUserDisplayName(task.assigned_to);
   const assignerName = appUserDisplayName(task.assigned_by);
   const statusUpdate = useTaskStatusUpdate();
@@ -72,11 +72,12 @@ export function TaskDetails({ task }: TaskDetailsProps) {
     task.status !== "under_review";
   const assignerId = task.assigned_by ? String(task.assigned_by.id) : "";
   const assigneeId = task.assigned_to ? String(task.assigned_to.id) : "";
-  const canEdit = assignerId === currentUser.id;
+  const currentUserId = appUser ? String(appUser.id) : "";
+  const canEdit = assignerId === currentUserId;
   const canUpdateStatus =
-    assigneeId === currentUser.id || assignerId === currentUser.id;
+    assigneeId === currentUserId || assignerId === currentUserId;
   const needsReview =
-    task.status === "completed" && assignerId === currentUser.id;
+    task.status === "completed" && assignerId === currentUserId;
 
   const handleStatusChange = (newStatus: TaskResponse["status"]) => {
     statusUpdate.mutate({ taskId: String(task.id), status: newStatus });
@@ -291,4 +292,3 @@ function MetadataItem({
     </div>
   );
 }
-

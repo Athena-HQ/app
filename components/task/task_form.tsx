@@ -14,7 +14,7 @@ import {
 import { DatePicker } from "@/components/ui/date_picker";
 import { FormError } from "@/components/form_error";
 import { useTaskForm } from "@/hooks/useTaskForm";
-import { getSubordinates, getCurrentUser } from "@/services/hierarchy";
+import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 import {
   TASK_PRIORITIES,
   TASK_CATEGORIES,
@@ -101,22 +101,13 @@ function FormField({
 }
 
 export function TaskForm({ taskId }: TaskFormProps) {
-  const { form, onSubmit, isSubmitting } = useTaskForm(taskId);
+  const { form, onSubmit, isSubmitting, isCurrentUserReady } = useTaskForm(taskId);
   const { register, control, handleSubmit, formState: { errors } } = form;
-  const currentUser = getCurrentUser();
-  const subordinates = getSubordinates(currentUser.id);
-  const assigneeOptions = [
-    {
-      id: currentUser.id,
-      name: `${currentUser.name} (Me)`,
-      role: currentUser.role,
-    },
-    ...subordinates.map((u) => ({
-      id: u.id,
-      name: `${u.name} (${u.role})`,
-      role: u.role,
-    })),
-  ];
+  const { assignableUsers, isLoading: isAssigneesLoading } = useAssignableUsers();
+  const assigneeOptions = assignableUsers.map((user) => ({
+    id: user.id,
+    name: user.isCurrentUser ? `${user.name} (Me)` : `${user.name}${user.role ? ` (${user.role})` : ""}`,
+  }));
 
   return (
     <Frame>
@@ -174,6 +165,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
                   <Select
                     value={field.value}
                     onValueChange={(value: string) => field.onChange(value)}
+                    disabled={isAssigneesLoading || !isCurrentUserReady}
                   >
                     <SelectTrigger id="assigneeId" className="w-full">
                       <SelectValue placeholder="Select a team member to assign this task" />
@@ -292,7 +284,10 @@ export function TaskForm({ taskId }: TaskFormProps) {
                 Cancel
               </Link>
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || (!taskId && (!isCurrentUserReady || isAssigneesLoading))}
+            >
               {isSubmitting
                 ? "Saving..."
                 : taskId

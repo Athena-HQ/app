@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getCurrentUser } from "@/services/hierarchy";
+import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import {
   Trophy,
   TrendingUp,
@@ -30,8 +30,10 @@ export function HeroStatCard({
   needsReviewCount,
   isManager = false,
 }: HeroStatCardProps) {
-  const currentUser = getCurrentUser();
-  const initials = currentUser.name
+  const { appUser } = useCurrentAppUser();
+  const userName = appUser?.name ?? "Athena User";
+  const userRole = appUser?.role ?? "Employee";
+  const initials = userName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -57,10 +59,10 @@ export function HeroStatCard({
               <div className="flex flex-col gap-2">
                 <div>
                   <h2 className="text-4xl font-bold mb-1">
-                    {currentUser.name}
+                    {userName}
                   </h2>
                   <p className="text-lg text-muted-foreground">
-                    {currentUser.role}
+                    {userRole}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mt-2 w-fit">

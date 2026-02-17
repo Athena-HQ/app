@@ -8,7 +8,7 @@ import {
   Users,
   ArrowRight,
 } from "lucide-react";
-import { getCurrentUser, getSubordinates } from "@/services/hierarchy";
+import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 
 interface CTAButtonProps {
   title: string;
@@ -85,9 +85,8 @@ export function CTASection({
   hasSquad,
   needsReviewCount,
 }: CTASectionProps) {
-  const currentUser = getCurrentUser();
-  const subordinates = getSubordinates(currentUser.id);
-  const isManager = subordinates.length > 0;
+  const { assignableUsers } = useAssignableUsers();
+  const isManager = assignableUsers.length > 1;
 
   const ctas: CTAButtonProps[] = [];
 
@@ -149,4 +148,3 @@ export function CTASection({
     </div>
   );
 }
-

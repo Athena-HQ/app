@@ -10,7 +10,13 @@ export const taskFormSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(2000, "Description must be less than 2000 characters"),
-  assigneeId: z.string().min(1, "Please select an assignee"),
+  assigneeId: z
+    .string()
+    .min(1, "Please select an assignee")
+    .refine((value) => {
+      const parsed = Number.parseInt(value, 10);
+      return Number.isInteger(parsed) && parsed > 0;
+    }, "Please select a valid assignee"),
   priority: z.enum(TASK_PRIORITIES as [TaskPriority, ...TaskPriority[]], {
     message: "Please select a priority",
   }),
@@ -28,4 +34,3 @@ export const taskStatusUpdateSchema = z.object({
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
 export type TaskStatusUpdateValues = z.infer<typeof taskStatusUpdateSchema>;
-

@@ -215,11 +215,7 @@ export function taskResponseToTask(t: TaskResponse): Task {
 }
 
 export const taskService = {
-  async createTask(
-    data: CreateTaskRequest,
-    assignerId: string
-  ): Promise<TaskResponse> {
-    void assignerId;
+  async createTask(data: CreateTaskRequest): Promise<TaskResponse> {
     return createTask(data);
   },
   async getTasks(filters: TaskFilters = {}): Promise<TaskListResponse[]> {
