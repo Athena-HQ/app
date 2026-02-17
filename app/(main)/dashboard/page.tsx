@@ -6,13 +6,12 @@ import { fadeInVariants } from "@/lib/animations-settings";
 import { HeroStatCard } from "@/components/dashboard/hero_stat_card";
 import { TaskStatCards } from "@/components/dashboard/task_stat_card";
 import { TaskCompletionGraph } from "@/components/dashboard/task_completion_graph";
-import { getCurrentUser, getSubordinates } from "@/services/hierarchy";
+import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
-  const currentUser = getCurrentUser();
-  const subordinates = getSubordinates(currentUser.id);
-  const isManager = subordinates.length > 0;
+  const { assignableUsers } = useAssignableUsers();
+  const isManager = assignableUsers.length > 1;
 
   if (isLoading) {
     return (

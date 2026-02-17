@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useTasks } from "./useTasks";
-import { getCurrentUser } from "@/services/hierarchy";
+import { useCurrentAppUser } from "./useCurrentAppUser";
 import {
   dashboardService,
   getDashboardStats,
@@ -37,8 +37,8 @@ export interface DashboardStats {
 }
 
 export function useDashboardStats() {
-  const currentUser = getCurrentUser();
-  const currentUserId = parseInt(currentUser.id, 10);
+  const { appUser } = useCurrentAppUser();
+  const currentUserId = appUser?.id;
 
   const { data: apiStats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard", "stats", "personal"],
@@ -68,12 +68,10 @@ export function useDashboardStats() {
   });
 
   const { data: assignedTasksRaw = [], isLoading: tasksLoading } = useTasks(
-    Number.isNaN(currentUserId) ? {} : { assigned_to: currentUserId }
+    currentUserId ? { assigned_to: currentUserId } : {}
   );
   const { data: needsReviewRaw = [] } = useTasks(
-    Number.isNaN(currentUserId)
-      ? {}
-      : { status: "completed", assigned_by: currentUserId }
+    currentUserId ? { status: "completed", assigned_by: currentUserId } : {}
   );
 
   const stats = useMemo((): DashboardStats => {
@@ -174,4 +172,3 @@ export function useDashboardStats() {
 
   return { data: stats, isLoading };
 }
-

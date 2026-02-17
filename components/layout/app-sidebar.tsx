@@ -228,7 +228,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               onClick={() => {
                 logout()
                   .then(() => router.push("/login"))
-                  .catch(() => {});
+                  .catch(() => { });
               }}
             >
               <RiLogoutBoxLine

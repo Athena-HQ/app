@@ -6,15 +6,15 @@ import { Button } from "@/components/ui/button";
 import { TaskTable } from "@/components/task/task_table";
 import { TaskFiltersComponent } from "@/components/task/task_filters";
 import { useTasks } from "@/hooks/useTasks";
-import { getCurrentUser } from "@/services/hierarchy";
+import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import type { TaskFilters } from "@/services/task";
 import { fadeInVariants } from "@/lib/animations-settings";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 
 export default function TasksPage() {
-  const currentUser = getCurrentUser();
-  const currentUserId = parseInt(currentUser.id, 10);
+  const { appUser } = useCurrentAppUser();
+  const currentUserId = appUser?.id;
   const [view, setView] = useState<
     "assigned_to_me" | "assigned_by_me" | "all" | "needs_review"
   >("all");
@@ -22,17 +22,21 @@ export default function TasksPage() {
 
   const taskFilters: TaskFilters = {
     ...filters,
-    ...(view === "assigned_to_me" ? { assigned_to: currentUserId } : {}),
-    ...(view === "assigned_by_me" ? { assigned_by: currentUserId } : {}),
+    ...(view === "assigned_to_me" && currentUserId
+      ? { assigned_to: currentUserId }
+      : {}),
+    ...(view === "assigned_by_me" && currentUserId
+      ? { assigned_by: currentUserId }
+      : {}),
     ...(view === "needs_review"
-      ? { status: "completed", assigned_by: currentUserId }
+      ? { status: "completed", ...(currentUserId ? { assigned_by: currentUserId } : {}) }
       : {}),
   };
 
   const { data: tasks = [], isLoading } = useTasks(taskFilters);
   const { data: needsReviewTasks = [] } = useTasks({
     status: "completed",
-    assigned_by: Number.isNaN(currentUserId) ? undefined : currentUserId,
+    assigned_by: currentUserId,
   });
 
   const needsReviewCount = needsReviewTasks.length;
