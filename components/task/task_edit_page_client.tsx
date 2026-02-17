@@ -9,20 +9,13 @@ import { Frame, FramePanel } from "@/components/ui/frame";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, Edit } from "lucide-react";
-import type { TaskResponse } from "@/services/task";
 
 type TaskEditPageClientProps = {
   taskId: string;
-  initialTask: TaskResponse | null;
 };
 
-export function TaskEditPageClient({
-  taskId,
-  initialTask,
-}: TaskEditPageClientProps) {
-  const { data: task, isLoading, error } = useTask(taskId, {
-    initialData: initialTask,
-  });
+export function TaskEditPageClient({ taskId }: TaskEditPageClientProps) {
+  const { data: task, isLoading, error } = useTask(taskId);
 
   if (isLoading) {
     return (

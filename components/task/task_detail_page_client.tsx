@@ -6,20 +6,13 @@ import { useTask } from "@/hooks/useTasks";
 import { fadeInVariants } from "@/lib/animations-settings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import type { TaskResponse } from "@/services/task";
 
 type TaskDetailPageClientProps = {
   taskId: string;
-  initialTask: TaskResponse | null;
 };
 
-export function TaskDetailPageClient({
-  taskId,
-  initialTask,
-}: TaskDetailPageClientProps) {
-  const { data: task, isLoading, error } = useTask(taskId, {
-    initialData: initialTask,
-  });
+export function TaskDetailPageClient({ taskId }: TaskDetailPageClientProps) {
+  const { data: task, isLoading, error } = useTask(taskId);
 
   if (isLoading) {
     return (

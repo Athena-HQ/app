@@ -9,12 +9,14 @@ import {
   taskService,
   type TaskPriority,
   type TaskCategory,
+  type TaskResponse,
 } from "@/services/task";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useTask } from "./useTasks";
 import { toast } from "sonner";
 import { useCurrentAppUser } from "./useCurrentAppUser";
 import { ApiError } from "@/lib/api/api-util";
+import { useTaskRelatedInvalidation } from "./useTaskRelatedInvalidation";
 
 const defaultValues: TaskFormValues = {
   title: "",
@@ -27,9 +29,9 @@ const defaultValues: TaskFormValues = {
 
 export function useTaskForm(taskId?: string) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { appUser, isMissingEmployee } = useCurrentAppUser();
   const { data: task } = useTask(taskId);
+  const { invalidateAfterTaskMutation } = useTaskRelatedInvalidation();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -46,8 +48,8 @@ export function useTaskForm(taskId?: string) {
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    onSuccess: async (createdTask: TaskResponse) => {
+      await invalidateAfterTaskMutation(String(createdTask.id));
       toast.success("Task created successfully");
       router.push("/tasks");
     },
@@ -71,9 +73,8 @@ export function useTaskForm(taskId?: string) {
           : undefined,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+    onSuccess: async () => {
+      await invalidateAfterTaskMutation(taskId);
       toast.success("Task updated successfully");
       router.push("/tasks");
     },

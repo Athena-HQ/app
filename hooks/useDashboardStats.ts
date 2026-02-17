@@ -11,6 +11,7 @@ import {
 import type { TaskListResponse } from "@/services/task";
 import { taskListResponseToTask } from "@/services/task";
 import { getMyXp, getMyBadges } from "@/services/gamification";
+import { queryKeys } from "@/lib/query-keys";
 
 export interface DashboardStats {
   assignedTasks: TaskListResponse[];
@@ -41,14 +42,14 @@ export function useDashboardStats() {
   const currentUserId = appUser?.id;
 
   const { data: apiStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["dashboard", "stats", "personal"],
+    queryKey: queryKeys.dashboard.stats,
     queryFn: () => getDashboardStats("personal"),
     staleTime: 1000 * 60,
   });
 
   const [perf3, perf6, perf12] = useQueries({
     queries: [3, 6, 12].map((months) => ({
-      queryKey: ["dashboard", "performance", "personal", months] as const,
+      queryKey: queryKeys.dashboard.performanceByMonths(months as 3 | 6 | 12),
       queryFn: () =>
         getDashboardPerformance("personal", undefined, months as 3 | 6 | 12),
       staleTime: 1000 * 60,
@@ -56,13 +57,13 @@ export function useDashboardStats() {
   });
 
   const { data: myXp } = useQuery({
-    queryKey: ["gamification", "my_xp"],
+    queryKey: queryKeys.gamification.myXp,
     queryFn: getMyXp,
     staleTime: 1000 * 60,
   });
 
   const { data: myBadges = [] } = useQuery({
-    queryKey: ["gamification", "my_badges"],
+    queryKey: queryKeys.gamification.myBadges,
     queryFn: getMyBadges,
     staleTime: 1000 * 60,
   });
