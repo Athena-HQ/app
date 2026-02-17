@@ -1,59 +1,15 @@
-"use client";
+import { notFound } from "next/navigation";
+import { TaskDetailPageClient } from "@/components/task/task_detail_page_client";
+import { getTaskServer } from "@/lib/api/server-task";
 
-import { motion } from "framer-motion";
-import { TaskDetails } from "@/components/task/task_details";
-import { useTask } from "@/hooks/useTasks";
-import { fadeInVariants } from "@/lib/animations-settings";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
-
-export default function TaskDetailPage({
+export default async function TaskDetailPage({
   params,
 }: {
-  params: { taskId: string };
+  params: Promise<{ taskId: string }>;
 }) {
-  const { data: task, isLoading, error } = useTask(params.taskId);
+  const { taskId } = await params;
+  const initialTask = await getTaskServer(taskId);
+  if (!initialTask) notFound();
 
-  if (isLoading) {
-    return (
-      <motion.div
-        variants={fadeInVariants}
-        initial="initial"
-        animate="animate"
-        className="flex flex-col gap-6 w-full"
-      >
-        <Card className="p-6">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-3/4" />
-        </Card>
-      </motion.div>
-    );
-  }
-
-  if (error || !task) {
-    return (
-      <motion.div
-        variants={fadeInVariants}
-        initial="initial"
-        animate="animate"
-        className="flex flex-col gap-6 w-full"
-      >
-        <Card className="p-6">
-          <p className="text-destructive">Task not found</p>
-        </Card>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div
-      variants={fadeInVariants}
-      initial="initial"
-      animate="animate"
-      className="flex flex-col gap-6 w-full"
-    >
-      <TaskDetails task={task} />
-    </motion.div>
-  );
+  return <TaskDetailPageClient taskId={taskId} initialTask={initialTask} />;
 }

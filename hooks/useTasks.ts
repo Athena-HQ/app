@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { taskService, type TaskFilters } from "@/services/task";
+import {
+  taskService,
+  type TaskFilters,
+  type TaskResponse,
+} from "@/services/task";
 
 export function useTasks(filters: TaskFilters = {}) {
   return useQuery({
@@ -9,12 +13,17 @@ export function useTasks(filters: TaskFilters = {}) {
   });
 }
 
-export function useTask(taskId: string | undefined) {
+export function useTask(
+  taskId: string | undefined,
+  options?: { initialData?: TaskResponse | null }
+) {
   return useQuery({
     queryKey: ["task", taskId],
     queryFn: () => (taskId ? taskService.getTaskById(taskId) : undefined),
     enabled: Boolean(taskId),
     staleTime: 1000 * 60,
+    ...(options?.initialData !== undefined
+      ? { initialData: options.initialData }
+      : {}),
   });
 }
-
