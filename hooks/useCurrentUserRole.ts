@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { getEmployees } from "@/services/company";
 
-const INVITER_ROLES = ["ceo", "hr"];
+const INVITER_ROLES = ["ceo", "hr", "company manager"];
 const ENGINEER_ROLES = ["senior engineer", "junior engineer"];
 
 export function useCurrentUserRole() {
@@ -20,6 +20,7 @@ export function useCurrentUserRole() {
     role !== null && INVITER_ROLES.includes(role);
   const canSeeMySquad =
     role !== null && ENGINEER_ROLES.includes(role);
+  const canViewCompanyOrg = role === "company manager";
 
-  return { role, canInviteEmployees, canSeeMySquad, isLoading };
+  return { role, canInviteEmployees, canSeeMySquad, canViewCompanyOrg, isLoading };
 }

@@ -3,7 +3,6 @@ import { signup } from "./auth";
 
 export interface CreateCompanyRequest {
   companyName: string;
-  companyIdentifier: string;
   fullName: string;
   email: string;
   password: string;

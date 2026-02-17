@@ -94,7 +94,7 @@ export default function LoginPage() {
           <span className="text-muted-foreground">Don&apos;t have an account? </span>
           <Link
             href="/join"
-            className="text-primary-foreground hover:underline font-medium"
+            className="text-primary hover:underline font-medium"
           >
             Join now
           </Link>

@@ -51,10 +51,6 @@ export function ConfirmationStep({
                 <span className="text-sm font-medium">Company Name:</span>
                 <span className="text-sm">{formData.companyName}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm font-medium">Company Identifier:</span>
-                <span className="text-sm">{formData.companyIdentifier}</span>
-              </div>
             </div>
           </div>
 

@@ -25,6 +25,7 @@ import {
   RiTaskLine,
   RiGroupLine,
   RiTeamLine,
+  RiBuilding2Line,
   RiSunLine,
   RiMoonLine,
 } from "@remixicon/react";
@@ -123,6 +124,7 @@ const data = {
 };
 
 const managementItems = [
+  { title: "My Company", url: "/company", icon: RiBuilding2Line, companyOrgOnly: true },
   { title: "Invite Employees", url: "/invite", icon: RiMailLine, inviteOnly: true },
   { title: "Squads", url: "/squads", icon: RiGroupLine, inviteOnly: false },
 ];
@@ -131,12 +133,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
-  const { canInviteEmployees, canSeeMySquad } = useCurrentUserRole();
+  const { canInviteEmployees, canSeeMySquad, canViewCompanyOrg } = useCurrentUserRole();
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = (resolvedTheme ?? "dark") === "dark";
-  const filteredManagementItems = managementItems.filter(
-    (item) => !item.inviteOnly || canInviteEmployees
-  );
+  const filteredManagementItems = managementItems.filter((item) => {
+    if ("companyOrgOnly" in item && item.companyOrgOnly) return canViewCompanyOrg;
+    if ("inviteOnly" in item && item.inviteOnly) return canInviteEmployees;
+    return true;
+  });
   const mySquadItem = {
     title: "My Squad",
     url: "/my-squad",

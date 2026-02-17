@@ -68,12 +68,17 @@ export const useInvitationForm = () => {
     },
   });
 
-  const onSubmit = async (data: InvitationFormValues) => {
-    await sendInvitationMutation.mutateAsync({
-      email: data.email,
-      role: data.role as InvitationRole,
-    });
-    form.reset();
+  const onSubmit = async (data: InvitationFormValues): Promise<boolean> => {
+    try {
+      await sendInvitationMutation.mutateAsync({
+        email: data.email,
+        role: data.role as InvitationRole,
+      });
+      form.reset();
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   return {

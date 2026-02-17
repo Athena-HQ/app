@@ -5,14 +5,6 @@ export const companyInfoSchema = z.object({
     .string()
     .min(2, "Company name must be at least 2 characters")
     .max(100, "Company name must be less than 100 characters"),
-  companyIdentifier: z
-    .string()
-    .min(3, "Company identifier must be at least 3 characters")
-    .max(50, "Company identifier must be less than 50 characters")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Company identifier can only contain lowercase letters, numbers, and hyphens"
-    ),
 });
 
 export const decisionMakerSchema = z
