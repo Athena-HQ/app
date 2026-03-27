@@ -55,7 +55,7 @@ export function MemberAllocator({ roles = {}, members = [], onChange }: MemberAl
           <Label className="text-base text-foreground font-medium block">
             {role} Team
           </Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             {Array.from({ length: count }).map((_, i) => (
               <div key={`${role}-${i}`} className="flex flex-col gap-1.5">
                 <span className="text-xs text-muted-foreground px-1">
