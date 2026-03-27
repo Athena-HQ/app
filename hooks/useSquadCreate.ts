@@ -14,6 +14,10 @@ export const squadSchema = z.object({
   techStack: z.array(z.string()).min(1, "Select at least one technology"),
   squadLeader: z.string().min(1, "Squad leader is required"),
   roles: z.record(z.string(), z.number()),
+  members: z.array(z.object({
+    app_user_id: z.number(),
+    role_in_squad: z.string()
+  })).optional(),
 });
 
 export type SquadFormValues = z.infer<typeof squadSchema>;
@@ -33,9 +37,9 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
         name: data.squadName,
         description: data.squadDescription ?? "",
         stack: data.techStack.join(", "),
-        project_name: data.squadName,
-        leader_id: data.squadLeader ? parseInt(data.squadLeader, 10) : null,
-        is_active: true,
+        squad_lead_id: data.squadLeader ? parseInt(data.squadLeader, 10) : null,
+        team_composition: data.roles,
+        member_ids: data.members,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["squads"] });
@@ -55,9 +59,9 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
         name: data.squadName,
         description: data.squadDescription ?? "",
         stack: data.techStack.join(", "),
-        project_name: data.squadName,
-        leader_id: data.squadLeader ? parseInt(data.squadLeader, 10) : null,
-        is_active: true,
+        squad_lead_id: data.squadLeader ? parseInt(data.squadLeader, 10) : null,
+        team_composition: data.roles,
+        member_ids: data.members,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["squads"] });
@@ -79,6 +83,7 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
       techStack: initialValues?.techStack ?? [],
       squadLeader: initialValues?.squadLeader ?? "",
       roles: initialValues?.roles ?? {},
+      members: initialValues?.members ?? [],
     },
   });
 
@@ -90,6 +95,7 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
         techStack: initialValues.techStack ?? [],
         squadLeader: initialValues.squadLeader ?? "",
         roles: initialValues.roles ?? {},
+        members: initialValues.members ?? [],
       });
     }
   }, [
@@ -99,6 +105,7 @@ export function useSquadCreate(initialValues?: SquadFormInitialValues) {
     initialValues?.techStack,
     initialValues?.squadLeader,
     initialValues?.roles,
+    initialValues?.members,
     form,
   ]);
 
@@ -133,7 +140,11 @@ export async function fetchSquadForEdit(
     squadName: squad.name,
     squadDescription: squad.description ?? "",
     techStack: stack,
-    squadLeader: squad.leader?.id != null ? String(squad.leader.id) : "",
-    roles: {},
+    squadLeader: squad.squad_lead?.id != null ? String(squad.squad_lead.id) : "",
+    roles: squad.team_composition ?? {},
+    members: squad.members?.map(m => ({
+      app_user_id: m.app_user.id,
+      role_in_squad: m.role_in_squad
+    })) ?? [],
   };
 }

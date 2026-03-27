@@ -14,12 +14,11 @@ export interface SquadResponse {
   id: number;
   name: string;
   company: number;
-  leader: AppUserResponse | null;
-  leader_id?: number | null;
-  project_name: string;
+  squad_lead: AppUserResponse | null;
+  squad_lead_id?: number | null;
   stack: string;
   description: string;
-  is_active: boolean;
+  team_composition: Record<string, number>;
   created_at: string;
   updated_at: string;
   members: SquadMemberResponse[];
@@ -29,20 +28,18 @@ export interface SquadResponse {
 export interface SquadListResponse {
   id: number;
   name: string;
-  project_name: string;
   stack: string;
   leader_name: string | null;
   member_count: number;
-  is_active: boolean;
 }
 
 export interface CreateSquadRequest {
   name: string;
-  project_name?: string;
   stack?: string;
   description?: string;
-  is_active?: boolean;
-  leader_id?: number | null;
+  squad_lead_id?: number | null;
+  team_composition?: Record<string, number>;
+  member_ids?: { app_user_id: number; role_in_squad: string }[];
 }
 
 export type UpdateSquadRequest = CreateSquadRequest;

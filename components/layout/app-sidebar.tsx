@@ -154,15 +154,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader className="flex flex-row items-center gap-2">
-        <Image
-          src="/athena.avif"
-          alt="Logo"
-          width={56}
-          height={56}
-          className="w-14 h-14 object-cover rounded-full"
-          priority
-        />
-        <h1 className="text-2xl font-bold font-serif italic mt-2">Athena HQ</h1>
+        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Image
+            src="/athena.avif"
+            alt="Logo"
+            width={56}
+            height={56}
+            className="w-14 h-14 object-cover rounded-full"
+            priority
+          />
+          <h1 className="text-2xl font-bold font-serif italic mt-2">Athena HQ</h1>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         {data.navMain.map((item) => (

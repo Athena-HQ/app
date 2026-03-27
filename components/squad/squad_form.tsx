@@ -21,6 +21,7 @@ import { RoleBuilder } from "@/components/squad/role_builder";
 import type { RoleDefinition } from "@/components/squad/role_builder";
 import { TechStackSelect } from "@/components/squad/tech_stack_select";
 import { UserSelect } from "@/components/squad/user_select";
+import { MemberAllocator } from "@/components/squad/member_allocator";
 import { SquadPreview } from "@/components/squad/preview_card";
 import type { UseFormReturn } from "react-hook-form";
 import type { SquadFormValues } from "@/hooks/useSquadCreate";
@@ -222,6 +223,40 @@ export function SquadForm({
                             value={field.value}
                             onChange={field.onChange}
                             roleDefinitions={roleDefinitions}
+                          />
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+
+              <section className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Allocate Members
+                  </h2>
+                </div>
+
+                <Card className="border-none shadow-card bg-card/80 backdrop-blur-sm">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <Label>Staff the Squad (Manual Allocation)</Label>
+                      <p className="text-sm text-foreground/70 mb-4">
+                        Manually select members to fill the roles you've defined.
+                      </p>
+
+                      <Controller
+                        name="members"
+                        control={control}
+                        render={({ field }) => (
+                          <MemberAllocator
+                            roles={values.roles}
+                            members={field.value}
+                            onChange={field.onChange}
                           />
                         )}
                       />

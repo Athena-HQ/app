@@ -18,20 +18,7 @@ import {
 } from "@/lib/validations/invitation";
 import type { QueryClient } from "@tanstack/react-query";
 
-async function resolveCompanyId(queryClient: QueryClient): Promise<number> {
-  const invitations = await queryClient.fetchQuery({
-    queryKey: ["invitations"],
-    queryFn: () => invitationService.getInvitations(),
-  });
-  const fromInvitation = invitations[0]?.company;
-  if (fromInvitation != null) return fromInvitation;
-  const companies = await getCompanies();
-  const firstCompany = companies[0];
-  if (firstCompany == null) {
-    throw new Error("Company not found. Please complete company setup first.");
-  }
-  return firstCompany.id;
-}
+import { useCurrentAppUser } from "./useCurrentAppUser";
 
 export const useInvitations = () => {
   const { data: raw = [], isLoading } = useQuery({
@@ -45,10 +32,12 @@ export const useInvitations = () => {
 
 export const useInvitationForm = () => {
   const queryClient = useQueryClient();
+  const { appUser } = useCurrentAppUser();
 
   const sendInvitationMutation = useMutation({
     mutationFn: async (data: InvitationFormData) => {
-      const companyId = await resolveCompanyId(queryClient);
+      const companyId = appUser?.raw?.company;
+      if (!companyId) throw new Error("Company not found. Please complete company setup first.");
       return invitationService.sendInvitation(data, companyId);
     },
     onSuccess: () => {
@@ -90,6 +79,7 @@ export const useInvitationForm = () => {
 
 export const useInvitationActions = () => {
   const queryClient = useQueryClient();
+  const { appUser } = useCurrentAppUser();
 
   const resendMutation = useMutation({
     mutationFn: (id: string) => invitationService.resendInvitation(id),
@@ -115,7 +105,8 @@ export const useInvitationActions = () => {
 
   const bulkInviteMutation = useMutation({
     mutationFn: async (invitations: InvitationFormData[]) => {
-      const companyId = await resolveCompanyId(queryClient);
+      const companyId = appUser?.raw?.company;
+      if (!companyId) throw new Error("Company not found. Please complete company setup first.");
       return invitationService.bulkInvite(invitations, companyId);
     },
     onSuccess: (data) => {
