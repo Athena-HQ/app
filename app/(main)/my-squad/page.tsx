@@ -77,9 +77,9 @@ export default function MySquadPage() {
     ? squad.stack.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
   const leaderName =
-    squad?.leader?.first_name != null && squad?.leader?.last_name != null
-      ? `${squad.leader.first_name} ${squad.leader.last_name}`.trim()
-      : squad?.leader?.email ?? "—";
+    squad?.squad_lead?.first_name != null && squad?.squad_lead?.last_name != null
+      ? `${squad.squad_lead.first_name} ${squad.squad_lead.last_name}`.trim()
+      : squad?.squad_lead?.email ?? "—";
 
   return (
     <motion.div
@@ -109,22 +109,7 @@ export default function MySquadPage() {
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle className="text-xl">{squad.name}</CardTitle>
-                <Badge
-                  variant="outline"
-                  className={
-                    squad.is_active
-                      ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
-                      : "bg-muted text-muted-foreground"
-                  }
-                >
-                  {squad.is_active ? "Active" : "Inactive"}
-                </Badge>
               </div>
-              {squad.project_name && (
-                <p className="text-sm text-muted-foreground">
-                  {squad.project_name}
-                </p>
-              )}
               {squad.description && (
                 <p className="text-sm text-foreground/90 mt-1">
                   {squad.description}

@@ -20,31 +20,26 @@ import { listSquads, type SquadListResponse } from "@/services/squad";
 
 function filterSquads(
   squads: SquadListResponse[],
-  searchQuery: string,
-  statusFilter: string | null
+  searchQuery: string
 ) {
   return squads.filter((squad) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       squad.name.toLowerCase().includes(searchLower) ||
-      (squad.project_name ?? "").toLowerCase().includes(searchLower) ||
       (squad.stack ?? "").toLowerCase().includes(searchLower);
-    const status = squad.is_active ? "active" : "inactive";
-    const matchesStatus = statusFilter ? status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 }
 
 export default function SquadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const { data: squads = [], isLoading } = useQuery({
     queryKey: ["squads"],
     queryFn: listSquads,
   });
 
-  const filteredSquads = filterSquads(squads, searchQuery, statusFilter);
+  const filteredSquads = filterSquads(squads, searchQuery);
 
   return (
     <div className="min-h-screen pb-24 bg-transparent animate-in fade-in duration-500">
@@ -77,53 +72,6 @@ export default function SquadsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
-          <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-            <Button
-              variant={statusFilter === null ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter(null)}
-              className={
-                statusFilter === null
-                  ? "bg-background shadow-sm border border-border font-medium"
-                  : "text-muted-foreground"
-              }
-            >
-              All
-            </Button>
-            <Button
-              variant={statusFilter === "active" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter("active")}
-              className={
-                statusFilter === "active"
-                  ? "bg-background shadow-sm border border-border font-medium text-green-600 dark:text-green-400"
-                  : "text-muted-foreground"
-              }
-            >
-              Active
-            </Button>
-            <Button
-              variant={statusFilter === "inactive" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setStatusFilter("inactive")}
-              className={
-                statusFilter === "inactive"
-                  ? "bg-background shadow-sm border border-border font-medium text-muted-foreground"
-                  : "text-muted-foreground"
-              }
-            >
-              Inactive
-            </Button>
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 border-dashed"
-          >
-            <Filter className="w-4 h-4 text-muted-foreground" />
-          </Button>
         </div>
 
         {isLoading ? (
@@ -131,7 +79,6 @@ export default function SquadsPage() {
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSquads.map((squad, index) => {
-            const status = squad.is_active ? "active" : "inactive";
             const techStack = squad.stack
               ? squad.stack.split(",").map((s) => s.trim()).filter(Boolean)
               : [];
@@ -156,17 +103,7 @@ export default function SquadsPage() {
                   <div className="absolute inset-0 bg-accent/0 group-hover:bg-accent/5 transition-colors duration-300 z-0" />
 
                   <CardHeader className="pb-3 relative z-10">
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge
-                        variant="outline"
-                        className={
-                          status === "active"
-                            ? "border-0 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "border-0 px-2 py-0.5 uppercase text-[10px] tracking-wider font-bold bg-muted text-muted-foreground"
-                        }
-                      >
-                        {status}
-                      </Badge>
+                    <div className="flex justify-end items-start mb-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -180,12 +117,9 @@ export default function SquadsPage() {
                       </Button>
                     </div>
 
-                    <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                    <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1 min-h-[40px]">
                       {squad.name}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px]">
-                      {squad.project_name || "—"}
-                    </p>
                   </CardHeader>
 
                   <CardContent className="pb-3 space-y-4 relative z-10">
