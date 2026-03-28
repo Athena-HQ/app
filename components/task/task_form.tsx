@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { listSquads } from "@/services/squad";
 import { DatePicker } from "@/components/ui/date_picker";
 import { FormError } from "@/components/form_error";
 import { useTaskForm } from "@/hooks/useTaskForm";
@@ -27,6 +29,7 @@ import Link from "next/link";
 import {
   FileText,
   User,
+  Users,
   Flag,
   Tag,
   Calendar,
@@ -104,6 +107,12 @@ export function TaskForm({ taskId }: TaskFormProps) {
   const { form, onSubmit, isSubmitting, isCurrentUserReady } = useTaskForm(taskId);
   const { register, control, handleSubmit, formState: { errors } } = form;
   const { assignableUsers, isLoading: isAssigneesLoading } = useAssignableUsers();
+  
+  const { data: squads = [], isLoading: isSquadsLoading } = useQuery({
+    queryKey: ["squads"],
+    queryFn: listSquads,
+  });
+
   const assigneeOptions = assignableUsers.map((user) => ({
     id: user.id,
     name: user.isCurrentUser ? `${user.name} (Me)` : `${user.name}${user.role ? ` (${user.role})` : ""}`,
@@ -174,6 +183,36 @@ export function TaskForm({ taskId }: TaskFormProps) {
                       {assigneeOptions.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              )}
+            />
+
+            <Controller
+              name="squadId"
+              control={control}
+              render={({ field }) => (
+                <FormField
+                  icon={Users}
+                  label="Squad (Optional)"
+                  error={errors.squadId?.message}
+                >
+                  <Select
+                    value={field.value}
+                    onValueChange={(value: string) => field.onChange(value)}
+                    disabled={isSquadsLoading}
+                  >
+                    <SelectTrigger id="squadId" className="w-full">
+                      <SelectValue placeholder="Select a squad to assign this task" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {squads.map((squad) => (
+                        <SelectItem key={squad.id} value={String(squad.id)}>
+                          {squad.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

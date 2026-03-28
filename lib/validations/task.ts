@@ -24,6 +24,7 @@ export const taskFormSchema = z.object({
     message: "Please select a category",
   }),
   dueDate: z.string().optional(),
+  squadId: z.string().optional(),
 });
 
 export const taskStatusUpdateSchema = z.object({

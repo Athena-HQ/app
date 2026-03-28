@@ -25,6 +25,7 @@ const defaultValues: TaskFormValues = {
   priority: "medium",
   category: "feature",
   dueDate: "",
+  squadId: "none",
 };
 
 export function useTaskForm(taskId?: string) {
@@ -47,6 +48,7 @@ export function useTaskForm(taskId?: string) {
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
+        squad: data.squadId && data.squadId !== "none" ? parseInt(data.squadId, 10) : null,
       }),
     onSuccess: async (createdTask: TaskResponse) => {
       await invalidateAfterTaskMutation(String(createdTask.id));
@@ -71,6 +73,7 @@ export function useTaskForm(taskId?: string) {
         assigned_to_id: data.assigneeId
           ? parseInt(data.assigneeId, 10)
           : undefined,
+        squad: data.squadId && data.squadId !== "none" ? parseInt(data.squadId, 10) : null,
       });
     },
     onSuccess: async () => {
@@ -92,6 +95,7 @@ export function useTaskForm(taskId?: string) {
         priority: task.priority,
         category: task.category,
         dueDate: task.due_date ?? "",
+        squadId: task.squad ? String(task.squad) : "none",
       });
     }
   }, [task, form]);

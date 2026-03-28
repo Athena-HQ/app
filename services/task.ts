@@ -62,6 +62,7 @@ export interface UpdateTaskRequest {
   priority?: TaskPriority;
   due_date?: string | null;
   assigned_to_id?: number;
+  squad?: number | null;
 }
 
 export interface TaskFilters {
