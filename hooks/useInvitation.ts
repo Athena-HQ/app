@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +11,6 @@ import {
   type InvitationStatus,
   type InvitationRole,
 } from "@/services/invitation";
-import { getCompanies } from "@/services/company";
 import {
   invitationFormSchema,
   type InvitationFormValues,
@@ -25,7 +24,11 @@ export const useInvitations = () => {
     queryKey: ["invitations"],
     queryFn: () => invitationService.getInvitations(),
   });
-  const invitations = raw.map(invitationResponseToInvitation);
+  
+  const invitations = useMemo(
+    () => raw.map(invitationResponseToInvitation),
+    [raw]
+  );
 
   return { invitations, isLoading };
 };
@@ -135,17 +138,19 @@ export const useInvitationFilters = (invitations: Invitation[]) => {
     "all"
   );
 
-  const filteredInvitations = invitations.filter((invitation) => {
-    const matchesSearch = invitation.email
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesRole =
-      roleFilter === "all" || invitation.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "all" || invitation.status === statusFilter;
+  const filteredInvitations = useMemo(() => {
+    return invitations.filter((invitation) => {
+      const matchesSearch = invitation.email
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesRole =
+        roleFilter === "all" || invitation.role === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" || invitation.status === statusFilter;
 
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [invitations, searchQuery, roleFilter, statusFilter]);
 
   return {
     searchQuery,
