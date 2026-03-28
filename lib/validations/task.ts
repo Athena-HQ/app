@@ -10,13 +10,7 @@ export const taskFormSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(2000, "Description must be less than 2000 characters"),
-  assigneeId: z
-    .string()
-    .min(1, "Please select an assignee")
-    .refine((value) => {
-      const parsed = Number.parseInt(value, 10);
-      return Number.isInteger(parsed) && parsed > 0;
-    }, "Please select a valid assignee"),
+  assigneeId: z.string().optional(),
   priority: z.enum(TASK_PRIORITIES as [TaskPriority, ...TaskPriority[]], {
     message: "Please select a priority",
   }),
@@ -25,6 +19,21 @@ export const taskFormSchema = z.object({
   }),
   dueDate: z.string().optional(),
   squadId: z.string().optional(),
+}).superRefine((data, ctx) => {
+  const hasIndividual = data.assigneeId && data.assigneeId !== "none";
+  const hasSquad = data.squadId && data.squadId !== "none";
+  if (!hasIndividual && !hasSquad) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please assign an Individual, a Squad, or both.",
+      path: ["assigneeId"],
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please assign an Individual, a Squad, or both.",
+      path: ["squadId"],
+    });
+  }
 });
 
 export const taskStatusUpdateSchema = z.object({

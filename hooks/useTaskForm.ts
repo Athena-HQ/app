@@ -21,7 +21,7 @@ import { useTaskRelatedInvalidation } from "./useTaskRelatedInvalidation";
 const defaultValues: TaskFormValues = {
   title: "",
   description: "",
-  assigneeId: "",
+  assigneeId: "none",
   priority: "medium",
   category: "feature",
   dueDate: "",
@@ -44,7 +44,7 @@ export function useTaskForm(taskId?: string) {
       taskService.createTask({
         title: data.title,
         description: data.description,
-        assigned_to_id: parseInt(data.assigneeId, 10),
+        assigned_to_id: data.assigneeId && data.assigneeId !== "none" ? parseInt(data.assigneeId, 10) : null,
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
@@ -69,10 +69,9 @@ export function useTaskForm(taskId?: string) {
       if (!taskId) throw new Error("Task ID is required");
       return taskService.updateTask(taskId, {
         priority: data.priority as TaskPriority,
+        category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
-        assigned_to_id: data.assigneeId
-          ? parseInt(data.assigneeId, 10)
-          : undefined,
+        assigned_to_id: data.assigneeId && data.assigneeId !== "none" ? parseInt(data.assigneeId, 10) : null,
         squad: data.squadId && data.squadId !== "none" ? parseInt(data.squadId, 10) : null,
       });
     },
@@ -91,7 +90,7 @@ export function useTaskForm(taskId?: string) {
       form.reset({
         title: task.title,
         description: task.description,
-        assigneeId: String(task.assigned_to?.id ?? ""),
+        assigneeId: task.assigned_to ? String(task.assigned_to.id) : "none",
         priority: task.priority,
         category: task.category,
         dueDate: task.due_date ?? "",

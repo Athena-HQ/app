@@ -49,7 +49,7 @@ export interface TaskResponse {
 export interface CreateTaskRequest {
   title: string;
   description: string;
-  assigned_to_id: number;
+  assigned_to_id?: number | null;
   status?: TaskStatus;
   priority?: TaskPriority;
   category?: TaskCategory;
@@ -60,8 +60,9 @@ export interface CreateTaskRequest {
 export interface UpdateTaskRequest {
   status?: TaskStatus;
   priority?: TaskPriority;
+  category?: TaskCategory;
   due_date?: string | null;
-  assigned_to_id?: number;
+  assigned_to_id?: number | null;
   squad?: number | null;
 }
 

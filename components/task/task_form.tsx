@@ -63,7 +63,7 @@ function FormSection({
   children,
 }: {
   icon: React.ComponentType<{ className?: string; size?: number }>;
-  title: string;
+  title: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -160,15 +160,14 @@ export function TaskForm({ taskId }: TaskFormProps) {
 
           <Separator />
 
-          <FormSection icon={User} title="Assignment">
+          <FormSection icon={User} title="Assignment *">
             <Controller
               name="assigneeId"
               control={control}
               render={({ field }) => (
                 <FormField
                   icon={User}
-                  label="Assignee"
-                  required
+                  label="Individual"
                   error={errors.assigneeId?.message}
                 >
                   <Select
@@ -180,6 +179,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
                       <SelectValue placeholder="Select a team member to assign this task" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
                       {assigneeOptions.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.name}
@@ -197,7 +197,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
               render={({ field }) => (
                 <FormField
                   icon={Users}
-                  label="Squad (Optional)"
+                  label="Squad"
                   error={errors.squadId?.message}
                 >
                   <Select
