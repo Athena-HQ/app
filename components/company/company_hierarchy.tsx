@@ -82,9 +82,9 @@ export function CompanyHierarchy({ data }: { data: CompanyHierarchyViewModel }) 
     <div className="flex flex-col gap-8 w-full max-w-5xl">
       <Card className="py-2 shadow-none border-0 bg-transparent">
         <CardHeader className="px-0">
-          <CardTitle className="font-serif text-5xl tracking-tight">My Company</CardTitle>
+          <CardTitle className="font-serif text-5xl tracking-tight">Employees</CardTitle>
           <CardDescription className="uppercase tracking-[0.08em] text-base">
-            Company hierarchy
+            Company Team Hierarchy
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0 flex flex-wrap gap-2 items-center">

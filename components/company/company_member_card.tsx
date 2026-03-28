@@ -27,24 +27,32 @@ export function CompanyMemberCard({
   employee: AppUserResponse;
   compact?: boolean;
 }) {
+  const isManager = employee.role?.toLowerCase() === "company manager";
+
   return (
-    <Card className="border-border/70 bg-card py-3 shadow-none">
+    <Card 
+      className={`border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md ${
+        isManager ? "border-primary/20 bg-primary/5" : ""
+      }`}
+    >
       <CardContent
-        className={`px-6 flex flex-col items-center justify-center ${
-          compact ? "py-7 gap-3" : "py-9 gap-4"
+        className={`px-4 flex flex-col items-center justify-center ${
+          isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
         }`}
       >
-        <Avatar className={`${compact ? "h-20 w-20" : "h-22 w-22"} border bg-muted/50`}>
-          <AvatarFallback className="bg-muted/50 text-3xl font-semibold text-muted-foreground">
+        <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
+          <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
             {initials(employee)}
           </AvatarFallback>
         </Avatar>
-        <div className="text-center">
-          <p className="font-serif text-4 leading-none">{fullName(employee)}</p>
+        <div className="text-center mt-1">
+          <p className={`font-serif leading-none ${isManager ? "text-lg font-medium" : "text-base"}`}>
+            {fullName(employee)}
+          </p>
         </div>
         <Badge
-          variant="outline"
-          className="text-[11px] px-3.5 py-1 uppercase tracking-[0.18em] text-muted-foreground rounded-full"
+          variant={isManager ? "default" : "secondary"}
+          className={`uppercase tracking-widest rounded-full mt-1 ${isManager ? "text-[11px] px-3 py-1" : "text-[10px] px-2 py-0.5"}`}
         >
           {roleLabel(employee.role)}
         </Badge>
