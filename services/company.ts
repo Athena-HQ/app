@@ -73,6 +73,7 @@ export const createCompany = async (
       password: data.password,
       first_name: firstName,
       last_name: lastName,
+      company_name: data.companyName,
     });
 
     return {

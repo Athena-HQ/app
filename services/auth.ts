@@ -23,6 +23,7 @@ export interface SignupRequest {
   password: string;
   first_name: string;
   last_name: string;
+  company_name?: string;
 }
 
 export interface SignupResponse {
