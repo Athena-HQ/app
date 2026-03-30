@@ -71,6 +71,36 @@ export default function CompanyPage() {
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
+        {/* Manager Card */}
+        <Card className="bg-primary/5 shadow-sm border-primary/20 hover:border-primary/40 transition-colors md:col-span-2 lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-primary uppercase flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Company Manager
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {managerObj ? (
+              <div className="flex items-center gap-4 mt-1">
+                <Avatar className="h-14 w-14 border-2 border-primary/20 bg-background shadow-sm">
+                  <AvatarFallback className="text-lg font-semibold text-primary">
+                    {(managerObj.first_name?.[0] || managerObj.email?.[0] || "?").toUpperCase()}{(managerObj.last_name?.[0] || "").toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <p className="font-serif text-xl leading-none font-medium truncate">
+                    {`${managerObj.first_name || ""} ${managerObj.last_name || ""}`.trim() || "Manager"}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate mt-1">
+                    {managerObj.email}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg font-medium text-muted-foreground py-2">No manager assigned</p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Identifier Card */}
         <Card className="bg-card shadow-sm border-border/60 hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
@@ -95,20 +125,6 @@ export default function CompanyPage() {
           <CardContent>
             <p className="text-xl font-semibold leading-tight">
               {company.company_size || "Not specified"}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Established Card */}
-        <Card className="bg-card shadow-sm border-border/60 hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" /> Established
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">
-              {establishedDate}
             </p>
           </CardContent>
         </Card>
@@ -157,33 +173,17 @@ export default function CompanyPage() {
           </CardContent>
         </Card>
 
-        {/* Manager Card */}
-        <Card className="bg-primary/5 shadow-sm border-primary/20 hover:border-primary/40 transition-colors md:col-span-2 lg:col-span-1">
+        {/* Established Card */}
+        <Card className="bg-card shadow-sm border-border/60 hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-primary uppercase flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Company Manager
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" /> Established
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {managerObj ? (
-              <div className="flex items-center gap-4 mt-1">
-                <Avatar className="h-14 w-14 border-2 border-primary/20 bg-background shadow-sm">
-                  <AvatarFallback className="text-lg font-semibold text-primary">
-                    {(managerObj.first_name?.[0] || managerObj.email?.[0] || "?").toUpperCase()}{(managerObj.last_name?.[0] || "").toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col min-w-0">
-                  <p className="font-serif text-xl leading-none font-medium truncate">
-                    {`${managerObj.first_name || ""} ${managerObj.last_name || ""}`.trim() || "Manager"}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate mt-1">
-                    {managerObj.email}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-lg font-medium text-muted-foreground py-2">No manager assigned</p>
-            )}
+            <p className="text-xl font-semibold">
+              {establishedDate}
+            </p>
           </CardContent>
         </Card>
 

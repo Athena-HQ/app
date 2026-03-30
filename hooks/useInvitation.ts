@@ -47,8 +47,8 @@ export const useInvitationForm = () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast.success("Invitation sent successfully");
     },
-    onError: () => {
-      toast.error("Failed to send invitation");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to send invitation");
     },
   });
 
