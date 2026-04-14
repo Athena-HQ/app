@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { TaskStatusSelector } from "./task_status_selector";
 import { TaskStatusBadge } from "./task_status_badge";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Frame, FramePanel } from "@/components/ui/frame";
 import type { TaskResponse, TaskPriority, TaskCategory, SubtaskResponse } from "@/services/task";
+import { getMySquads } from "@/services/squad";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { useTaskStatusUpdate } from "@/hooks/useTaskStatusUpdate";
 import { SubtaskForm } from "./subtask_form";
@@ -94,10 +96,20 @@ export function TaskDetails({ task }: TaskDetailsProps) {
   const needsReview =
     task.status === "completed" && assignerId === currentUserId;
 
+  const { data: mySquads = [] } = useQuery({
+    queryKey: ["squads", "my_squads"],
+    queryFn: getMySquads,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isSquadMember = task.squad
+    ? mySquads.some((s) => s.id === task.squad)
+    : false;
+
   const canCreateSubtask =
     assignerId === currentUserId ||
     assigneeId === currentUserId ||
-    Boolean(task.squad);
+    isSquadMember;
 
   const isSubtask = task.parent_task !== null && task.parent_task !== undefined;
   const backHref = isSubtask ? `/tasks/${task.parent_task}` : "/tasks";
@@ -329,7 +341,7 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                       )}
                     </div>
                     {canCreateSubtask && (
-                      <SubtaskForm parentTaskId={task.id} />
+                      <SubtaskForm parentTaskId={task.id} squadId={task.squad} />
                     )}
                   </div>
 

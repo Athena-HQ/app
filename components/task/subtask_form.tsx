@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ import {
   type TaskCategory,
   type CreateSubtaskRequest,
 } from "@/services/task";
+import { getSquadMembers, type SquadMemberResponse } from "@/services/squad";
 import { queryKeys } from "@/lib/query-keys";
 import { Plus } from "lucide-react";
 
@@ -54,15 +55,24 @@ const categoryLabels: Record<string, string> = {
 
 type SubtaskFormProps = {
   parentTaskId: number;
+  squadId?: number | null;
 };
 
-export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
+export function SubtaskForm({ parentTaskId, squadId }: SubtaskFormProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [category, setCategory] = useState<TaskCategory>("feature");
+  const [assigneeId, setAssigneeId] = useState<string>("");
   const queryClient = useQueryClient();
+
+  const { data: squadMembers = [] } = useQuery({
+    queryKey: squadId ? queryKeys.squads.members(String(squadId)) : ["no-squad"],
+    queryFn: () => (squadId ? getSquadMembers(squadId) : Promise.resolve([])),
+    enabled: open && Boolean(squadId),
+    staleTime: 1000 * 60 * 5,
+  });
 
   const mutation = useMutation({
     mutationFn: (data: CreateSubtaskRequest) =>
@@ -91,6 +101,7 @@ export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
     setDescription("");
     setPriority("medium");
     setCategory("feature");
+    setAssigneeId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,12 +110,22 @@ export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
       toast.error("Title is required");
       return;
     }
-    mutation.mutate({
+    const payload: CreateSubtaskRequest = {
       title: title.trim(),
       description: description.trim(),
       priority,
       category,
-    });
+    };
+    if (assigneeId && assigneeId !== "none") {
+      payload.assigned_to_id = Number(assigneeId);
+    }
+    mutation.mutate(payload);
+  };
+
+  const memberName = (m: SquadMemberResponse) => {
+    const u = m.app_user;
+    const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
+    return name || u.email;
   };
 
   return (
@@ -180,6 +201,29 @@ export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
               </Select>
             </div>
           </div>
+
+          {squadId && (
+            <div className="space-y-2">
+              <Label>Assignee (Squad Member)</Label>
+              <Select
+                value={assigneeId}
+                onValueChange={setAssigneeId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a squad member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {squadMembers.map((m) => (
+                    <SelectItem key={m.app_user.id} value={String(m.app_user.id)}>
+                      {memberName(m)} · {m.role_in_squad}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <DialogFooter>
             <Button
               type="button"
