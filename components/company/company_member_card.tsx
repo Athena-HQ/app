@@ -47,12 +47,14 @@ export function CompanyMemberCard({
   return (
     <Link href={`/employees/${employee.id}`} className="block">
       <Card
-        className={`relative border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${isManager ? "border-primary/20 bg-primary/5" : ""
-          }`}
+        className={`relative border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${
+          isManager ? "border-primary/20 bg-primary/5" : ""
+        }`}
       >
         <CardContent
-          className={`px-4 flex flex-col items-center justify-center ${isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
-            }`}
+          className={`px-4 flex flex-col items-center justify-center ${
+            isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
+          }`}
         >
           <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
             <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
