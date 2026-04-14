@@ -23,6 +23,7 @@ import {
   RiMailLine,
   RiLogoutBoxLine,
   RiTaskLine,
+  RiChat1Line,
   RiGroupLine,
   RiTeamLine,
   RiBuilding2Line,
@@ -67,6 +68,11 @@ const data = {
           title: "Tasks",
           url: "/tasks",
           icon: RiTaskLine,
+        },
+        {
+          title: "Chat",
+          url: "/chat",
+          icon: RiChat1Line,
         },
         // {
         //   title: "Insights",
