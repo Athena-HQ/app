@@ -1,7 +1,13 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AppUserResponse } from "@/services/company";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { RiMessage3Line } from "@remixicon/react";
 
 function fullName(employee: AppUserResponse): string {
   const name = `${employee.first_name} ${employee.last_name}`.trim();
@@ -28,10 +34,16 @@ export function CompanyMemberCard({
   compact?: boolean;
 }) {
   const isManager = employee.role?.toLowerCase() === "company manager";
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleChatClick = () => {
+    router.push(`/chat?new_dm=${employee.user_id}`);
+  };
 
   return (
     <Card 
-      className={`border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md ${
+      className={`relative border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md ${
         isManager ? "border-primary/20 bg-primary/5" : ""
       }`}
     >
@@ -56,6 +68,17 @@ export function CompanyMemberCard({
         >
           {roleLabel(employee.role)}
         </Badge>
+        {user && user.pk !== employee.user_id && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            onClick={handleChatClick}
+            title={`Chat with ${employee.first_name}`}
+          >
+            <RiMessage3Line size={18} />
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
