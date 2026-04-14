@@ -5,14 +5,16 @@ import { TaskStatusBadge } from "./task_status_badge";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Frame, FramePanel } from "@/components/ui/frame";
-import type { TaskResponse, TaskPriority } from "@/services/task";
+import type { TaskResponse, TaskPriority, SubtaskResponse } from "@/services/task";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { useTaskStatusUpdate } from "@/hooks/useTaskStatusUpdate";
+import { SubtaskForm } from "./subtask_form";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   User,
+  Users,
   Calendar,
   Clock,
   Flag,
@@ -21,6 +23,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  GitBranch,
 } from "lucide-react";
 
 function appUserDisplayName(user: { first_name?: string; last_name?: string; role?: string | null } | null | undefined): string {
@@ -79,6 +82,13 @@ export function TaskDetails({ task }: TaskDetailsProps) {
   const needsReview =
     task.status === "completed" && assignerId === currentUserId;
 
+  // Determine if user can create subtasks
+  // (assigner, assignee, or squad member — backend enforces, frontend just shows/hides button)
+  const canCreateSubtask =
+    assignerId === currentUserId ||
+    assigneeId === currentUserId ||
+    Boolean(task.squad); // If squad assigned, show button (backend checks membership)
+
   const handleStatusChange = (newStatus: TaskResponse["status"]) => {
     statusUpdate.mutate({ taskId: String(task.id), status: newStatus });
   };
@@ -86,6 +96,8 @@ export function TaskDetails({ task }: TaskDetailsProps) {
   const handleMarkAsReviewed = () => {
     statusUpdate.mutate({ taskId: String(task.id), status: "under_review" });
   };
+
+  const subtasks: SubtaskResponse[] = task.subtasks ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -173,11 +185,34 @@ export function TaskDetails({ task }: TaskDetailsProps) {
               <div>
                 <h2 className="text-lg font-semibold mb-4">Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <MetadataItem
-                    icon={User}
-                    label="Assignee"
-                    value={task.assigned_to ? `${assigneeName}${task.assigned_to.role ? ` · ${task.assigned_to.role}` : ""}` : undefined}
-                  />
+                  {/* Squad Assignment */}
+                  {task.squad_name && (
+                    <MetadataItem icon={Users} label="Squad">
+                      <Badge className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 w-fit">
+                        <Users className="h-3 w-3 mr-1" />
+                        {task.squad_name}
+                      </Badge>
+                    </MetadataItem>
+                  )}
+
+                  {/* Individual Assignment */}
+                  <MetadataItem icon={User} label="Assignee">
+                    {task.assigned_to ? (
+                      <div className="flex items-center gap-2">
+                        <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit">
+                          <User className="h-3 w-3 mr-1" />
+                          {assigneeName}
+                        </Badge>
+                        {task.assigned_to.role && (
+                          <span className="text-xs text-muted-foreground">
+                            · {task.assigned_to.role}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </MetadataItem>
 
                   <MetadataItem
                     icon={User}
@@ -259,6 +294,60 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   </MetadataItem>
                 </div>
               </div>
+            </div>
+
+            {/* Subtasks Section */}
+            <Separator />
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold">Subtasks</h2>
+                  {subtasks.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {subtasks.length}
+                    </Badge>
+                  )}
+                </div>
+                {canCreateSubtask && !task.parent_task && (
+                  <SubtaskForm parentTaskId={task.id} />
+                )}
+              </div>
+
+              {subtasks.length === 0 ? (
+                <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center">
+                  <GitBranch className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    No subtasks yet. Break this task down into smaller pieces.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {subtasks.map((subtask) => (
+                    <div
+                      key={subtask.id}
+                      className="flex items-center justify-between rounded-lg border bg-card p-3 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <TaskStatusBadge status={subtask.status} />
+                        <span className="text-sm font-medium truncate">
+                          {subtask.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge className={cn("text-xs", priorityColors[subtask.priority])}>
+                          {subtask.priority}
+                        </Badge>
+                        {subtask.assigned_to_name && (
+                          <span className="text-xs text-muted-foreground">
+                            {subtask.assigned_to_name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </FramePanel>

@@ -7,16 +7,18 @@ import { TaskTable } from "@/components/task/task_table";
 import { TaskFiltersComponent } from "@/components/task/task_filters";
 import { useTasks } from "@/hooks/useTasks";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
-import type { TaskFilters } from "@/services/task";
+import { getMySquadTasks, type TaskFilters, type TaskListResponse } from "@/services/task";
 import { fadeInVariants } from "@/lib/animations-settings";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import Link from "next/link";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Users } from "lucide-react";
 
 export default function TasksPage() {
   const { appUser } = useCurrentAppUser();
   const currentUserId = appUser?.id;
   const [view, setView] = useState<
-    "assigned_to_me" | "assigned_by_me" | "all" | "needs_review"
+    "assigned_to_me" | "assigned_by_me" | "all" | "needs_review" | "my_squad_tasks"
   >("all");
   const [filters, setFilters] = useState<TaskFilters>({});
 
@@ -33,7 +35,18 @@ export default function TasksPage() {
       : {}),
   };
 
-  const { data: tasks = [], isLoading } = useTasks(taskFilters);
+  // Regular task list (used for all views except my_squad_tasks)
+  const { data: tasks = [], isLoading } = useTasks(
+    view !== "my_squad_tasks" ? taskFilters : {}
+  );
+
+  // Dedicated squad tasks query
+  const { data: squadTasks = [], isLoading: isSquadTasksLoading } = useQuery({
+    queryKey: queryKeys.tasks.mySquadTasks,
+    queryFn: () => getMySquadTasks(),
+    enabled: view === "my_squad_tasks",
+  });
+
   const { data: needsReviewTasks = [] } = useTasks({
     status: "completed",
     assigned_by: currentUserId,
@@ -43,6 +56,9 @@ export default function TasksPage() {
   const needsReviewIds = new Set(
     needsReviewTasks.map((t) => String(t.id))
   );
+
+  const displayTasks: TaskListResponse[] = view === "my_squad_tasks" ? squadTasks : tasks;
+  const displayLoading = view === "my_squad_tasks" ? isSquadTasksLoading : isLoading;
 
   return (
     <motion.div
@@ -83,6 +99,14 @@ export default function TasksPage() {
         >
           Assigned by Me
         </Button>
+        <Button
+          variant={view === "my_squad_tasks" ? "default" : "secondary"}
+          onClick={() => setView("my_squad_tasks")}
+          className="gap-2"
+        >
+          <Users className="h-4 w-4" />
+          My Squad Tasks
+        </Button>
         {needsReviewCount > 0 && (
           <Button
             variant={view === "needs_review" ? "default" : "secondary"}
@@ -97,9 +121,15 @@ export default function TasksPage() {
         )}
       </div>
 
-      <TaskFiltersComponent filters={filters} onFiltersChange={setFilters} />
+      {view !== "my_squad_tasks" && (
+        <TaskFiltersComponent filters={filters} onFiltersChange={setFilters} />
+      )}
 
-      <TaskTable tasks={tasks} isLoading={isLoading} needsReviewIds={needsReviewIds} />
+      <TaskTable
+        tasks={displayTasks}
+        isLoading={displayLoading}
+        needsReviewIds={needsReviewIds}
+      />
     </motion.div>
   );
 }

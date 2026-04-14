@@ -97,3 +97,8 @@ export const addSquadMember = async (
   );
   return response;
 };
+
+export const getSquadTasks = async (squadId: number): Promise<unknown[]> => {
+  const response = await api.get<unknown[]>(`/squads/${squadId}/tasks/`);
+  return Array.isArray(response) ? response : [];
+};

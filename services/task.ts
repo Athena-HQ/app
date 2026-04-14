@@ -16,6 +16,7 @@ export type TaskCategory =
   | "research"
   | "testing"
   | "other";
+export type AssignmentType = "squad" | "individual" | "both" | "none";
 
 export interface TaskListResponse {
   id: number;
@@ -26,6 +27,22 @@ export interface TaskListResponse {
   due_date: string | null;
   assigned_to_name: string | null;
   assigned_by_name: string | null;
+  squad_name: string | null;
+  squad_id: number | null;
+  assignment_type: AssignmentType;
+  subtask_count: number;
+  parent_task_id: number | null;
+}
+
+export interface SubtaskResponse {
+  id: number;
+  title: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  category: TaskCategory;
+  due_date: string | null;
+  assigned_to_name: string | null;
+  created_at: string;
 }
 
 export interface TaskResponse {
@@ -36,8 +53,11 @@ export interface TaskResponse {
   squad: number | null;
   squad_name: string | null;
   assigned_by: AppUserResponse;
-  assigned_to: AppUserResponse;
+  assigned_to: AppUserResponse | null;
   assigned_to_id?: number;
+  parent_task: number | null;
+  subtasks: SubtaskResponse[];
+  subtask_count: number;
   status: TaskStatus;
   priority: TaskPriority;
   category: TaskCategory;
@@ -55,6 +75,16 @@ export interface CreateTaskRequest {
   category?: TaskCategory;
   due_date?: string | null;
   squad?: number | null;
+  parent_task_id?: number | null;
+}
+
+export interface CreateSubtaskRequest {
+  title: string;
+  description?: string;
+  priority?: TaskPriority;
+  category?: TaskCategory;
+  due_date?: string | null;
+  assigned_to_id?: number | null;
 }
 
 export interface UpdateTaskRequest {
@@ -137,6 +167,40 @@ export const getMyTasks = async (
 ): Promise<TaskListResponse[]> => {
   const qs = status ? `?status=${status}` : "";
   const response = await api.get<TaskListResponse[]>(`/tasks/my_tasks/${qs}`);
+  return Array.isArray(response) ? response : [];
+};
+
+export const getMySquadTasks = async (
+  status?: TaskStatus
+): Promise<TaskListResponse[]> => {
+  const qs = status ? `?status=${status}` : "";
+  const response = await api.get<TaskListResponse[]>(`/tasks/my_squad_tasks/${qs}`);
+  return Array.isArray(response) ? response : [];
+};
+
+export const getSubtasks = async (taskId: number): Promise<SubtaskResponse[]> => {
+  const response = await api.get<SubtaskResponse[]>(`/tasks/${taskId}/subtasks/`);
+  return Array.isArray(response) ? response : [];
+};
+
+export const createSubtask = async (
+  taskId: number,
+  data: CreateSubtaskRequest
+): Promise<SubtaskResponse> => {
+  const response = await api.post<SubtaskResponse>(`/tasks/${taskId}/subtasks/`, {
+    ...data,
+    priority: data.priority ?? "medium",
+    category: data.category ?? "feature",
+  });
+  return response;
+};
+
+export const getSquadTasks = async (
+  squadId: number,
+  status?: TaskStatus
+): Promise<TaskListResponse[]> => {
+  const qs = status ? `?status=${status}` : "";
+  const response = await api.get<TaskListResponse[]>(`/squads/${squadId}/tasks/${qs}`);
   return Array.isArray(response) ? response : [];
 };
 

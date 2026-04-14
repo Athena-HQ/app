@@ -5,6 +5,13 @@ export const queryKeys = {
     all: ["tasks"] as const,
     list: (filters: TaskFilters) => ["tasks", filters] as const,
     detail: (taskId: string) => ["task", taskId] as const,
+    subtasks: (taskId: string) => ["task", taskId, "subtasks"] as const,
+    mySquadTasks: ["tasks", "my-squad-tasks"] as const,
+  },
+  squads: {
+    all: ["squads"] as const,
+    detail: (squadId: string) => ["squad", squadId] as const,
+    tasks: (squadId: string) => ["squad", squadId, "tasks"] as const,
   },
   dashboard: {
     stats: ["dashboard", "stats", "personal"] as const,

@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Plus, Filter, MoreHorizontal, Users } from "lucide-react";
+import { Search, Plus, Edit, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Card,
@@ -86,7 +85,7 @@ export default function SquadsPage() {
             return (
             <Link
               key={squad.id}
-              href={`/squads/${squad.id}/edit`}
+              href={`/squads/${squad.id}`}
               className="block h-full"
             >
               <motion.div
@@ -108,12 +107,14 @@ export default function SquadsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground"
+                        asChild
                         onClick={(e) => {
-                          e.preventDefault();
                           e.stopPropagation();
                         }}
                       >
-                        <MoreHorizontal className="w-4 h-4" />
+                        <Link href={`/squads/${squad.id}/edit`}>
+                          <Edit className="w-4 h-4" />
+                        </Link>
                       </Button>
                     </div>
 

@@ -13,7 +13,7 @@ import {
   type Header,
   type Cell,
 } from "@tanstack/react-table";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, Users, User, GitBranch } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
 
@@ -78,12 +78,20 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
     {
       accessorKey: "title",
       cell: ({ row }: { row: Row<TaskListResponse> }) => (
-        <Link
-          href={`/tasks/${row.original.id}`}
-          className="font-medium hover:underline"
-        >
-          {row.getValue("title")}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/tasks/${row.original.id}`}
+            className="font-medium hover:underline"
+          >
+            {row.getValue("title")}
+          </Link>
+          {(row.original.subtask_count ?? 0) > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <GitBranch className="h-3 w-3" />
+              {row.original.subtask_count}
+            </span>
+          )}
+        </div>
       ),
       header: "Title",
       size: 250,
@@ -122,14 +130,31 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
       size: 100,
     },
     {
-      accessorKey: "assigned_to_name",
-      cell: ({ row }: { row: Row<TaskListResponse> }) => (
-        <div className="text-sm">
-          {row.original.assigned_to_name ?? "—"}
-        </div>
-      ),
-      header: "Assignee",
-      size: 150,
+      id: "assigned_to",
+      cell: ({ row }: { row: Row<TaskListResponse> }) => {
+        const { assignment_type, assigned_to_name, squad_name } = row.original;
+        return (
+          <div className="flex flex-col gap-1">
+            {(assignment_type === "squad" || assignment_type === "both") && squad_name && (
+              <Badge className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 hover:bg-purple-500/20 w-fit">
+                <Users className="h-3 w-3 mr-1" />
+                {squad_name}
+              </Badge>
+            )}
+            {(assignment_type === "individual" || assignment_type === "both") && assigned_to_name && (
+              <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 hover:bg-sky-500/20 w-fit">
+                <User className="h-3 w-3 mr-1" />
+                {assigned_to_name}
+              </Badge>
+            )}
+            {assignment_type === "none" && (
+              <span className="text-sm text-muted-foreground">—</span>
+            )}
+          </div>
+        );
+      },
+      header: "Assigned To",
+      size: 200,
     },
     {
       accessorKey: "assigned_by_name",
