@@ -10,7 +10,7 @@ export const taskFormSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(2000, "Description must be less than 2000 characters"),
-  assigneeId: z.string().optional(),
+  assigneeIds: z.array(z.string()),
   priority: z.enum(TASK_PRIORITIES as [TaskPriority, ...TaskPriority[]], {
     message: "Please select a priority",
   }),
@@ -18,20 +18,32 @@ export const taskFormSchema = z.object({
     message: "Please select a category",
   }),
   dueDate: z.string().optional(),
-  squadId: z.string().optional(),
+  squadIds: z.array(z.string()),
 }).superRefine((data, ctx) => {
-  const hasIndividual = data.assigneeId && data.assigneeId !== "none";
-  const hasSquad = data.squadId && data.squadId !== "none";
-  if (!hasIndividual && !hasSquad) {
+  const hasIndividuals = data.assigneeIds && data.assigneeIds.length > 0;
+  const hasSquads = data.squadIds && data.squadIds.length > 0;
+  
+  if (!hasIndividuals && !hasSquads) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Please assign an Individual, a Squad, or both.",
-      path: ["assigneeId"],
+      message: "Please assign to individuals or squads.",
+      path: ["assigneeIds"],
     });
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Please assign an Individual, a Squad, or both.",
-      path: ["squadId"],
+      message: "Please assign to individuals or squads.",
+      path: ["squadIds"],
+    });
+  } else if (hasIndividuals && hasSquads) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "A task cannot be assigned to both individuals and squads.",
+      path: ["assigneeIds"],
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "A task cannot be assigned to both individuals and squads.",
+      path: ["squadIds"],
     });
   }
 });

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TaskListResponse, TaskPriority } from "@/services/task";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { User, Users } from "lucide-react";
 
 type TaskCardProps = {
   task: TaskListResponse;
@@ -25,9 +26,9 @@ export function TaskCard({ task }: TaskCardProps) {
 
   return (
     <Link href={`/tasks/${task.id}`}>
-      <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
+      <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer h-full flex flex-col">
+        <div className="flex items-start justify-between gap-4 flex-1">
+          <div className="flex-1 min-w-0 flex flex-col h-full">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="font-semibold text-sm truncate">{task.title}</h3>
               <TaskStatusBadge status={task.status} />
@@ -48,13 +49,33 @@ export function TaskCard({ task }: TaskCardProps) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-              {task.assigned_to_name && (
-                <span>Assignee: {task.assigned_to_name}</span>
-              )}
-              {task.assigned_by_name && (
-                <span>Assigned by: {task.assigned_by_name}</span>
-              )}
+            <div className="mt-auto pt-3">
+              <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                {(task.assigned_to_name || (task.squads && task.squads.length > 0)) && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">Assignee:</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {task.assigned_to_name && task.assigned_to_name.split(', ').map((name, i) => (
+                        <span key={i} className="flex items-center gap-1 bg-sky-500/10 text-sky-400 px-1.5 py-0.5 rounded-md border border-sky-500/20">
+                          <User className="h-3 w-3" />
+                          {name}
+                        </span>
+                      ))}
+                      {task.squads && task.squads.map((squad, i) => (
+                        <span key={squad.id || i} className="flex items-center gap-1 bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded-md border border-purple-500/20">
+                          <Users className="h-3 w-3" />
+                          {squad.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {task.assigned_by_name && (
+                  <div className="flex items-center gap-1.5 ml-auto">
+                      <span>Assigned by: {task.assigned_by_name}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

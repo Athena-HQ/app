@@ -79,7 +79,6 @@ function formatDistanceToNow(date: Date): string {
 
 export function TaskDetails({ task }: TaskDetailsProps) {
   const { appUser } = useCurrentAppUser();
-  const assigneeName = appUserDisplayName(task.assigned_to);
   const assignerName = appUserDisplayName(task.assigned_by);
   const statusUpdate = useTaskStatusUpdate();
   const isOverdue =
@@ -88,27 +87,29 @@ export function TaskDetails({ task }: TaskDetailsProps) {
     task.status !== "completed" &&
     task.status !== "under_review";
   const assignerId = task.assigned_by ? String(task.assigned_by.id) : "";
-  const assigneeId = task.assigned_to ? String(task.assigned_to.id) : "";
   const currentUserId = appUser ? String(appUser.id) : "";
   const canEdit = assignerId === currentUserId;
-  const canUpdateStatus =
-    assigneeId === currentUserId || assignerId === currentUserId;
-  const needsReview =
-    task.status === "completed" && assignerId === currentUserId;
-
+  
   const { data: mySquads = [] } = useQuery({
     queryKey: ["squads", "my_squads"],
     queryFn: getMySquads,
     staleTime: 1000 * 60 * 5,
   });
 
-  const isSquadMember = task.squad
-    ? mySquads.some((s) => s.id === task.squad)
+  const isAssignee = task.assignees?.some(a => String(a.id) === currentUserId) || false;
+  const isSquadMember = (task.squads && task.squads.length > 0)
+    ? task.squads.some(s => mySquads.some((ms) => ms.id === s.id))
     : false;
+    
+  const canUpdateStatus =
+    isAssignee || isSquadMember || assignerId === currentUserId;
+  const needsReview =
+    task.status === "completed" && assignerId === currentUserId;
+
 
   const canCreateSubtask =
     assignerId === currentUserId ||
-    assigneeId === currentUserId ||
+    isAssignee ||
     isSquadMember;
 
   const isSubtask = task.parent_task !== null && task.parent_task !== undefined;
@@ -217,27 +218,46 @@ export function TaskDetails({ task }: TaskDetailsProps) {
               <div>
                 <h2 className="text-lg font-semibold mb-4">Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {task.squad_name && (
-                    <MetadataItem icon={Users} label="Squad">
-                      <Badge className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 w-fit">
-                        <Users className="h-3 w-3 mr-1" />
-                        {task.squad_name}
-                      </Badge>
-                    </MetadataItem>
-                  )}
-
                   <MetadataItem icon={User} label="Assignee">
-                    {task.assigned_to ? (
-                      <div className="flex items-center gap-2">
-                        <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit">
-                          <User className="h-3 w-3 mr-1" />
-                          {assigneeName}
-                        </Badge>
-                        {task.assigned_to.role && (
-                          <span className="text-xs text-muted-foreground">
-                            · {task.assigned_to.role}
-                          </span>
-                        )}
+                    {(task.assignees && task.assignees.length > 0) || (task.squads && task.squads.length > 0) ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {task.assignees && task.assignees.map((assignee, idx) => (
+                          <div key={assignee.id || idx} className="flex items-center gap-2">
+                            <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit">
+                              <User className="h-3 w-3 mr-1" />
+                              {assignee.first_name} {assignee.last_name}
+                            </Badge>
+                            {assignee.role && (
+                              <span className="text-xs text-muted-foreground mr-1">
+                                · {assignee.role}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                        {task.squads && task.squads.map((squad, idx) => (
+                          <Badge key={squad.id || idx} className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 w-fit">
+                            <Users className="h-3 w-3 mr-1" />
+                            {squad.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : subtasks.some((st) => st.assigned_to_name) ? (
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from(
+                          new Set(
+                            subtasks
+                              .map((st) => st.assigned_to_name)
+                              .filter(Boolean)
+                          )
+                        ).map((name) => (
+                          <Badge
+                            key={name}
+                            className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit"
+                          >
+                            <User className="h-3 w-3 mr-1" />
+                            {name}
+                          </Badge>
+                        ))}
                       </div>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
@@ -341,7 +361,7 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                       )}
                     </div>
                     {canCreateSubtask && (
-                      <SubtaskForm parentTaskId={task.id} squadId={task.squad} />
+                      <SubtaskForm parentTaskId={task.id} squads={task.squads || []} />
                     )}
                   </div>
 

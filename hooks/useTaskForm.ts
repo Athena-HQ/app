@@ -21,11 +21,11 @@ import { useTaskRelatedInvalidation } from "./useTaskRelatedInvalidation";
 const defaultValues: TaskFormValues = {
   title: "",
   description: "",
-  assigneeId: "none",
+  assigneeIds: [],
   priority: "medium",
   category: "feature",
   dueDate: "",
-  squadId: "none",
+  squadIds: [],
 };
 
 export function useTaskForm(taskId?: string) {
@@ -44,11 +44,11 @@ export function useTaskForm(taskId?: string) {
       taskService.createTask({
         title: data.title,
         description: data.description,
-        assigned_to_id: data.assigneeId && data.assigneeId !== "none" ? parseInt(data.assigneeId, 10) : null,
+        assignee_ids: data.assigneeIds.length > 0 ? data.assigneeIds.map(id => parseInt(id, 10)) : null,
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
-        squad: data.squadId && data.squadId !== "none" ? parseInt(data.squadId, 10) : null,
+        squad_ids: data.squadIds.length > 0 ? data.squadIds.map(id => parseInt(id, 10)) : null,
       }),
     onSuccess: async (createdTask: TaskResponse) => {
       await invalidateAfterTaskMutation(String(createdTask.id));
@@ -71,8 +71,8 @@ export function useTaskForm(taskId?: string) {
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
-        assigned_to_id: data.assigneeId && data.assigneeId !== "none" ? parseInt(data.assigneeId, 10) : null,
-        squad: data.squadId && data.squadId !== "none" ? parseInt(data.squadId, 10) : null,
+        assignee_ids: data.assigneeIds.length > 0 ? data.assigneeIds.map(id => parseInt(id, 10)) : null,
+        squad_ids: data.squadIds.length > 0 ? data.squadIds.map(id => parseInt(id, 10)) : null,
       });
     },
     onSuccess: async () => {
@@ -90,11 +90,11 @@ export function useTaskForm(taskId?: string) {
       form.reset({
         title: task.title,
         description: task.description,
-        assigneeId: task.assigned_to ? String(task.assigned_to.id) : "none",
+        assigneeIds: task.assignees ? task.assignees.map(a => String(a.id)) : [],
         priority: task.priority,
         category: task.category,
         dueDate: task.due_date ?? "",
-        squadId: task.squad ? String(task.squad) : "none",
+        squadIds: task.squads ? task.squads.map(s => String(s.id)) : [],
       });
     }
   }, [task, form]);

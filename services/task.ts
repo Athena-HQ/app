@@ -27,8 +27,7 @@ export interface TaskListResponse {
   due_date: string | null;
   assigned_to_name: string | null;
   assigned_by_name: string | null;
-  squad_name: string | null;
-  squad_id: number | null;
+  squads: { id: number; name: string }[];
   assignment_type: AssignmentType;
   subtask_count: number;
   parent_task_id: number | null;
@@ -50,11 +49,11 @@ export interface TaskResponse {
   title: string;
   description: string;
   company: number;
-  squad: number | null;
-  squad_name: string | null;
+  squads: { id: number; name: string }[];
+  squad_ids?: number[];
   assigned_by: AppUserResponse;
-  assigned_to: AppUserResponse | null;
-  assigned_to_id?: number;
+  assignees: AppUserResponse[];
+  assignee_ids?: number[];
   parent_task: number | null;
   subtasks: SubtaskResponse[];
   subtask_count: number;
@@ -69,12 +68,12 @@ export interface TaskResponse {
 export interface CreateTaskRequest {
   title: string;
   description: string;
-  assigned_to_id?: number | null;
+  assignee_ids?: number[] | null;
   status?: TaskStatus;
   priority?: TaskPriority;
   category?: TaskCategory;
   due_date?: string | null;
-  squad?: number | null;
+  squad_ids?: number[] | null;
   parent_task_id?: number | null;
 }
 
@@ -84,7 +83,7 @@ export interface CreateSubtaskRequest {
   priority?: TaskPriority;
   category?: TaskCategory;
   due_date?: string | null;
-  assigned_to_id?: number | null;
+  assignee_ids?: number[] | null;
 }
 
 export interface UpdateTaskRequest {
@@ -92,11 +91,12 @@ export interface UpdateTaskRequest {
   priority?: TaskPriority;
   category?: TaskCategory;
   due_date?: string | null;
-  assigned_to_id?: number | null;
-  squad?: number | null;
+  assignee_ids?: number[] | null;
+  squad_ids?: number[] | null;
 }
 
 export interface TaskFilters {
+  assignees?: number;
   status?: TaskStatus;
   priority?: TaskPriority;
   assigned_to?: number;
@@ -239,7 +239,8 @@ export interface Task {
   title: string;
   description: string;
   assignerId: string;
-  assigneeId: string;
+  assigneeIds: string[];
+  squadIds: string[];
   status: TaskStatus;
   priority: TaskPriority;
   category: TaskCategory;
@@ -254,7 +255,8 @@ export function taskListResponseToTask(t: TaskListResponse): Task {
     title: t.title,
     description: "",
     assignerId: "",
-    assigneeId: "",
+    assigneeIds: [],
+    squadIds: t.squads ? t.squads.map(s => String(s.id)) : [],
     status: t.status,
     priority: t.priority,
     category: t.category,
@@ -270,7 +272,8 @@ export function taskResponseToTask(t: TaskResponse): Task {
     title: t.title,
     description: t.description,
     assignerId: String(t.assigned_by?.id ?? ""),
-    assigneeId: String(t.assigned_to?.id ?? ""),
+    assigneeIds: t.assignees ? t.assignees.map(a => String(a.id)) : [],
+    squadIds: t.squads ? t.squads.map(s => String(s.id)) : [],
     status: t.status,
     priority: t.priority,
     category: t.category,

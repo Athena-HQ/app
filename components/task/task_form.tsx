@@ -122,7 +122,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
     <Frame>
       <FramePanel>
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(onSubmit as any)}
           className="flex flex-col gap-6"
         >
           <FormSection icon={FileText} title="Basic Information">
@@ -162,61 +162,91 @@ export function TaskForm({ taskId }: TaskFormProps) {
 
           <FormSection icon={User} title="Assignment *">
             <Controller
-              name="assigneeId"
+              name="assigneeIds"
               control={control}
               render={({ field }) => (
                 <FormField
                   icon={User}
-                  label="Individual"
-                  error={errors.assigneeId?.message}
+                  label="Individuals (Multiple)"
+                  error={errors.assigneeIds?.message as string}
                 >
-                  <Select
-                    value={field.value}
-                    onValueChange={(value: string) => field.onChange(value)}
-                    disabled={isAssigneesLoading || !isCurrentUserReady}
-                  >
-                    <SelectTrigger id="assigneeId" className="w-full">
-                      <SelectValue placeholder="Select a team member to assign this task" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {assigneeOptions.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
+                  <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[50px] max-h-[150px] overflow-y-auto bg-background">
+                    {assigneeOptions.length === 0 && !isAssigneesLoading && (
+                      <span className="text-sm text-muted-foreground py-1">No users available</span>
+                    )}
+                    {isAssigneesLoading && (
+                      <span className="text-sm text-muted-foreground py-1">Loading users...</span>
+                    )}
+                    {assigneeOptions.map((user) => {
+                      const isSelected = field.value.includes(user.id);
+                      return (
+                        <div
+                          key={user.id}
+                          onClick={() => {
+                            if (!isCurrentUserReady) return;
+                            const newVals = isSelected
+                              ? field.value.filter((id) => id !== user.id)
+                              : [...field.value, user.id];
+                            field.onChange(newVals);
+                          }}
+                          className={`cursor-pointer px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                            isSelected
+                              ? "bg-sky-500/15 text-sky-400 border-sky-500/30"
+                              : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                          }`}
+                        >
+                          <User className="h-3.5 w-3.5" />
                           {user.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Select one or more individuals to assign this task to.</p>
                 </FormField>
               )}
             />
 
             <Controller
-              name="squadId"
+              name="squadIds"
               control={control}
               render={({ field }) => (
                 <FormField
                   icon={Users}
-                  label="Squad"
-                  error={errors.squadId?.message}
+                  label="Squads (Multiple)"
+                  error={errors.squadIds?.message as string}
                 >
-                  <Select
-                    value={field.value}
-                    onValueChange={(value: string) => field.onChange(value)}
-                    disabled={isSquadsLoading}
-                  >
-                    <SelectTrigger id="squadId" className="w-full">
-                      <SelectValue placeholder="Select a squad to assign this task" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {squads.map((squad) => (
-                        <SelectItem key={squad.id} value={String(squad.id)}>
+                  <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[50px] max-h-[150px] overflow-y-auto bg-background">
+                    {squads.length === 0 && !isSquadsLoading && (
+                      <span className="text-sm text-muted-foreground py-1">No squads available</span>
+                    )}
+                    {isSquadsLoading && (
+                      <span className="text-sm text-muted-foreground py-1">Loading squads...</span>
+                    )}
+                    {squads.map((squad) => {
+                      const isSelected = field.value.includes(String(squad.id));
+                      return (
+                        <div
+                          key={squad.id}
+                          onClick={() => {
+                            if (!isCurrentUserReady) return;
+                            const newVals = isSelected
+                              ? field.value.filter((id) => id !== String(squad.id))
+                              : [...field.value, String(squad.id)];
+                            field.onChange(newVals);
+                          }}
+                          className={`cursor-pointer px-3 py-1.5 text-xs rounded-full border transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                            isSelected
+                              ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                              : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted"
+                          }`}
+                        >
+                          <Users className="h-3.5 w-3.5" />
                           {squad.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Select one or more squads to assign this task to.</p>
                 </FormField>
               )}
             />

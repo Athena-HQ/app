@@ -132,20 +132,28 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
     {
       id: "assigned_to",
       cell: ({ row }: { row: Row<TaskListResponse> }) => {
-        const { assignment_type, assigned_to_name, squad_name } = row.original;
+        const { assignment_type, assigned_to_name, squads } = row.original;
         return (
           <div className="flex flex-col gap-1">
-            {(assignment_type === "squad" || assignment_type === "both") && squad_name && (
-              <Badge className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 hover:bg-purple-500/20 w-fit">
-                <Users className="h-3 w-3 mr-1" />
-                {squad_name}
-              </Badge>
+            {(assignment_type === "squad" || assignment_type === "both") && squads && squads.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {squads.map((squad) => (
+                  <Badge key={squad.id} className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 hover:bg-purple-500/20 w-fit">
+                    <Users className="h-3 w-3 mr-1" />
+                    {squad.name}
+                  </Badge>
+                ))}
+              </div>
             )}
             {(assignment_type === "individual" || assignment_type === "both") && assigned_to_name && (
-              <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 hover:bg-sky-500/20 w-fit">
-                <User className="h-3 w-3 mr-1" />
-                {assigned_to_name}
-              </Badge>
+              <div className="flex flex-wrap gap-1">
+                {assigned_to_name.split(', ').map((name, i) => (
+                  <Badge key={i} className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 hover:bg-sky-500/20 w-fit">
+                    <User className="h-3 w-3 mr-1" />
+                    {name}
+                  </Badge>
+                ))}
+              </div>
             )}
             {assignment_type === "none" && (
               <span className="text-sm text-muted-foreground">—</span>

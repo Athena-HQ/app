@@ -55,10 +55,10 @@ const categoryLabels: Record<string, string> = {
 
 type SubtaskFormProps = {
   parentTaskId: number;
-  squadId?: number | null;
+  squads?: { id: number; name: string }[];
 };
 
-export function SubtaskForm({ parentTaskId, squadId }: SubtaskFormProps) {
+export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -68,9 +68,9 @@ export function SubtaskForm({ parentTaskId, squadId }: SubtaskFormProps) {
   const queryClient = useQueryClient();
 
   const { data: squadMembers = [] } = useQuery({
-    queryKey: squadId ? queryKeys.squads.members(String(squadId)) : ["no-squad"],
-    queryFn: () => (squadId ? getSquadMembers(squadId) : Promise.resolve([])),
-    enabled: open && Boolean(squadId),
+    queryKey: squads.length > 0 ? ["squads", "members", squads.map(s => s.id).join(",")] : ["no-squad"],
+    queryFn: () => squads.length > 0 ? Promise.all(squads.map(s => getSquadMembers(s.id))).then(res => res.flat()) : Promise.resolve([]),
+    enabled: open && squads.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -117,7 +117,7 @@ export function SubtaskForm({ parentTaskId, squadId }: SubtaskFormProps) {
       category,
     };
     if (assigneeId && assigneeId !== "none") {
-      payload.assigned_to_id = Number(assigneeId);
+      payload.assignee_ids = [Number(assigneeId)];
     }
     mutation.mutate(payload);
   };
@@ -202,7 +202,7 @@ export function SubtaskForm({ parentTaskId, squadId }: SubtaskFormProps) {
             </div>
           </div>
 
-          {squadId && (
+          {squads.length > 0 && (
             <div className="space-y-2">
               <Label>Assignee (Squad Member)</Label>
               <Select
