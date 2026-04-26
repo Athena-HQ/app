@@ -12,5 +12,7 @@ export function useCurrentUserRole() {
     role !== null && ENGINEER_ROLES.includes(role);
   const canViewCompanyOrg = role === "company manager";
 
-  return { role, canInviteEmployees, canSeeMySquad, canViewCompanyOrg, isLoading };
+  const isCompanyManager = role === "company manager";
+
+  return { role, canInviteEmployees, canSeeMySquad, canViewCompanyOrg, isCompanyManager, isLoading };
 }

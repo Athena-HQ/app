@@ -28,6 +28,7 @@ import {
   RiBuilding2Line,
   RiSunLine,
   RiMoonLine,
+  RiSettings3Line,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
@@ -203,6 +204,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+        {/* Account group */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="uppercase text-muted-foreground/60">
+            Account
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  className="group/menu-button font-medium gap-3 h-9 rounded-md bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+                  isActive={pathname === "/settings"}
+                >
+                  <Link href="/settings">
+                    <RiSettings3Line
+                      className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
+                      size={22}
+                      aria-hidden="true"
+                    />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <hr className="border-t border-border mx-2 -mt-px" />
