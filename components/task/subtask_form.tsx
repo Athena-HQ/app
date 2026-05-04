@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   createSubtask,
   TASK_PRIORITIES,
   TASK_CATEGORIES,
@@ -32,9 +45,10 @@ import {
   type TaskCategory,
   type CreateSubtaskRequest,
 } from "@/services/task";
-import { getSquadMembers, type SquadMemberResponse } from "@/services/squad";
+import { DatePicker } from "@/components/ui/date_picker";
+import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 import { queryKeys } from "@/lib/query-keys";
-import { Plus } from "lucide-react";
+import { Plus, Check, ChevronsUpDown } from "lucide-react";
 
 const priorityLabels: Record<string, string> = {
   low: "Low",
@@ -58,21 +72,21 @@ type SubtaskFormProps = {
   squads?: { id: number; name: string }[];
 };
 
-export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
+export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [category, setCategory] = useState<TaskCategory>("feature");
-  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string>("");
   const queryClient = useQueryClient();
+  const { assignableUsers, isLoading: isAssigneesLoading } = useAssignableUsers();
 
-  const { data: squadMembers = [] } = useQuery({
-    queryKey: squads.length > 0 ? ["squads", "members", squads.map(s => s.id).join(",")] : ["no-squad"],
-    queryFn: () => squads.length > 0 ? Promise.all(squads.map(s => getSquadMembers(s.id))).then(res => res.flat()) : Promise.resolve([]),
-    enabled: open && squads.length > 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  const assigneeOptions = assignableUsers.map((user) => ({
+    id: String(user.id),
+    name: user.isCurrentUser ? `${user.name} (Me)` : `${user.name}${user.role ? ` (${user.role})` : ""}`,
+  }));
 
   const mutation = useMutation({
     mutationFn: (data: CreateSubtaskRequest) =>
@@ -101,7 +115,8 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
     setDescription("");
     setPriority("medium");
     setCategory("feature");
-    setAssigneeId("");
+    setSelectedAssigneeIds([]);
+    setDueDate("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -110,23 +125,28 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
       toast.error("Title is required");
       return;
     }
+    if (!dueDate) {
+      toast.error("Due date is required");
+      return;
+    }
+    if (selectedAssigneeIds.length === 0) {
+      toast.error("Please assign at least one person");
+      return;
+    }
     const payload: CreateSubtaskRequest = {
       title: title.trim(),
       description: description.trim(),
       priority,
       category,
+      due_date: dueDate,
+      assignee_ids: selectedAssigneeIds.map(Number),
     };
-    if (assigneeId && assigneeId !== "none") {
-      payload.assignee_ids = [Number(assigneeId)];
-    }
     mutation.mutate(payload);
   };
 
-  const memberName = (m: SquadMemberResponse) => {
-    const u = m.app_user;
-    const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
-    return name || u.email;
-  };
+  const selectedNames = assigneeOptions
+    .filter((u) => selectedAssigneeIds.includes(u.id))
+    .map((u) => u.name);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -136,7 +156,7 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
           Add Subtask
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>Create Subtask</DialogTitle>
           <DialogDescription>
@@ -144,6 +164,7 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="subtask-title">Title *</Label>
             <Input
@@ -153,6 +174,8 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
+
+          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="subtask-description">Description</Label>
             <Textarea
@@ -163,9 +186,11 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
+
+          {/* Priority + Category */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Priority</Label>
+              <Label>Priority *</Label>
               <Select
                 value={priority}
                 onValueChange={(v) => setPriority(v as TaskPriority)}
@@ -202,27 +227,80 @@ export function SubtaskForm({ parentTaskId, squads = [] }: SubtaskFormProps) {
             </div>
           </div>
 
-          {squads.length > 0 && (
-            <div className="space-y-2">
-              <Label>Assignee (Squad Member)</Label>
-              <Select
-                value={assigneeId}
-                onValueChange={setAssigneeId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a squad member..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
-                  {squadMembers.map((m) => (
-                    <SelectItem key={m.app_user.id} value={String(m.app_user.id)}>
-                      {memberName(m)} · {m.role_in_squad}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Assignees */}
+          <div className="space-y-2">
+            <Label>Assignees *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  className="w-full justify-between font-normal h-auto min-h-10 py-2"
+                  disabled={isAssigneesLoading}
+                >
+                  <span className="flex flex-wrap gap-1 text-left">
+                    {selectedNames.length === 0 ? (
+                      <span className="text-muted-foreground">
+                        {isAssigneesLoading ? "Loading..." : "Select assignees…"}
+                      </span>
+                    ) : (
+                      selectedNames.map((name) => (
+                        <span
+                          key={name}
+                          className="bg-sky-500/15 text-sky-400 border border-sky-500/30 rounded-full px-2 py-0.5 text-xs"
+                        >
+                          {name}
+                        </span>
+                      ))
+                    )}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search assignees…" />
+                  <CommandList>
+                    <CommandEmpty>No users found.</CommandEmpty>
+                    <CommandGroup>
+                      {assigneeOptions.map((user) => {
+                        const isSelected = selectedAssigneeIds.includes(user.id);
+                        return (
+                          <CommandItem
+                            key={user.id}
+                            value={user.name}
+                            onSelect={() => {
+                              setSelectedAssigneeIds((prev) =>
+                                isSelected
+                                  ? prev.filter((id) => id !== user.id)
+                                  : [...prev, user.id]
+                              );
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
+                            />
+                            {user.name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <Label>Due Date *</Label>
+            <DatePicker
+              value={dueDate || undefined}
+              onChange={(value) => setDueDate(value ?? "")}
+              placeholder="Select a due date"
+            />
+          </div>
 
           <DialogFooter>
             <Button

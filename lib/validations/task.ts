@@ -17,7 +17,7 @@ export const taskFormSchema = z.object({
   category: z.enum(TASK_CATEGORIES as [TaskCategory, ...TaskCategory[]], {
     message: "Please select a category",
   }),
-  dueDate: z.string().optional(),
+  dueDate: z.string().min(1, "Due date is required"),
   squadIds: z.array(z.string()),
 }).superRefine((data, ctx) => {
   const hasIndividuals = data.assigneeIds && data.assigneeIds.length > 0;

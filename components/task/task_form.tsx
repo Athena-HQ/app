@@ -408,15 +408,12 @@ export function TaskForm({ taskId }: TaskFormProps) {
               name="dueDate"
               control={control}
               render={({ field }) => (
-                <FormField icon={Calendar} label="Due Date">
+                <FormField icon={Calendar} label="Due Date" required error={errors.dueDate?.message}>
                   <DatePicker
                     value={field.value || undefined}
                     onChange={(value) => field.onChange(value ?? "")}
-                    placeholder="Select a due date (optional)"
+                    placeholder="Select a due date"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Optional: Set a deadline for this task
-                  </p>
                 </FormField>
               )}
             />

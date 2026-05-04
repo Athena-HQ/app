@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getMyXp, getMyBadges } from "@/services/gamification";
 import { getDashboardStats } from "@/services/dashboard";
@@ -294,8 +296,21 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
   ];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-      {/* Identity */}
+    <div className="flex flex-col gap-6">
+      <div className="flex justify-end">
+        <Button 
+          variant="outline" 
+          asChild 
+          size="sm" 
+          className="rounded-full border-green-600 text-green-600 hover:bg-green-600/10 hover:text-green-700"
+        >
+          <Link href={`/employees/${appUser.id}`}>
+            See public view
+          </Link>
+        </Button>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+        {/* Identity */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -515,6 +530,7 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
         isSubmitting={isSubmitting}
         onDiscard={handleDiscard}
       />
-    </form>
+      </form>
+    </div>
   );
 }
