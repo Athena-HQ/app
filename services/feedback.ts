@@ -1,6 +1,6 @@
 import { api } from "@/lib/api/api-util";
 
-export type FeedbackAttributeValue = 0 | 0.2 | 0.4 | 0.6 | 0.8 | 1;
+export type FeedbackAttributeValue = 1 | 2 | 3 | 4 | 5;
 
 export interface FeedbackResponse {
   id: number;
@@ -21,6 +21,7 @@ export interface FeedbackResponse {
     role: string | null;
   };
   task: number | null;
+  task_title: string | null;
   communication: number;
   quality_of_work: number;
   timeliness: number;
@@ -42,23 +43,13 @@ export interface CreateFeedbackRequest {
   comment?: string | null;
 }
 
-export interface UpdateFeedbackRequest {
-  communication?: FeedbackAttributeValue;
-  quality_of_work?: FeedbackAttributeValue;
-  timeliness?: FeedbackAttributeValue;
-  teamwork?: FeedbackAttributeValue;
-  initiative?: FeedbackAttributeValue;
-  comment?: string | null;
-}
-
-export const FEEDBACK_ATTRIBUTE_OPTIONS: { value: FeedbackAttributeValue; label: string }[] = [
-  { value: 0, label: "Poor" },
-  { value: 0.2, label: "Below Average" },
-  { value: 0.4, label: "Average" },
-  { value: 0.6, label: "Good" },
-  { value: 0.8, label: "Very Good" },
-  { value: 1, label: "Excellent" },
-];
+export const FEEDBACK_ATTRIBUTES = [
+  { key: "communication" as const, label: "Communication" },
+  { key: "quality_of_work" as const, label: "Quality of Work" },
+  { key: "timeliness" as const, label: "Timeliness" },
+  { key: "teamwork" as const, label: "Teamwork" },
+  { key: "initiative" as const, label: "Initiative" },
+] as const;
 
 export async function listFeedback(toAppUserId?: number): Promise<FeedbackResponse[]> {
   const path = toAppUserId != null
@@ -68,22 +59,17 @@ export async function listFeedback(toAppUserId?: number): Promise<FeedbackRespon
   return Array.isArray(response) ? response : [];
 }
 
+export async function listFeedbackForTask(taskId: number): Promise<FeedbackResponse[]> {
+  const response = await api.get<FeedbackResponse[]>(`/feedback/?task=${taskId}`);
+  return Array.isArray(response) ? response : [];
+}
+
 export async function getFeedback(id: number): Promise<FeedbackResponse> {
-  const response = await api.get<FeedbackResponse>(`/feedback/${id}/`);
-  return response;
+  return api.get<FeedbackResponse>(`/feedback/${id}/`);
 }
 
 export async function createFeedback(data: CreateFeedbackRequest): Promise<FeedbackResponse> {
-  const response = await api.post<FeedbackResponse>("/feedback/", data);
-  return response;
-}
-
-export async function updateFeedback(
-  id: number,
-  data: UpdateFeedbackRequest
-): Promise<FeedbackResponse> {
-  const response = await api.patch<FeedbackResponse>(`/feedback/${id}/`, data);
-  return response;
+  return api.post<FeedbackResponse>("/feedback/", data);
 }
 
 export async function deleteFeedback(id: number): Promise<void> {
@@ -92,8 +78,8 @@ export async function deleteFeedback(id: number): Promise<void> {
 
 export const feedbackService = {
   listFeedback,
+  listFeedbackForTask,
   getFeedback,
   createFeedback,
-  updateFeedback,
   deleteFeedback,
 };

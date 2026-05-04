@@ -1,50 +1,47 @@
-import { api } from "@/lib/api/api-util";
+import { updateMyProfile, type ProfileUpdateRequest } from "./employee";
 
-export interface ProfileUpdateRequest {
-  first_name?: string;
-  last_name?: string;
-  bio?: string;
-}
+export type { ProfileUpdateRequest };
 
-export interface SocialLinkPayload {
-  id: string;
-  platform: string;
-  value: string;
-  visible: boolean;
-}
-
-// TODO: backend endpoint needed — PATCH /employees/{id}/profile/ accepting { first_name, last_name, bio }
+// Re-export under the same function names the settings UI already uses
 export async function updateEmployeeProfile(
-  userId: number,
+  _userId: number,
   data: ProfileUpdateRequest
 ): Promise<void> {
-  await api.patch(`/employees/${userId}/profile/`, data);
+  await updateMyProfile(data);
 }
 
-// TODO: backend endpoint needed — PUT /employees/{id}/social-links/ accepting SocialLinkPayload[]
 export async function updateSocialLinks(
-  userId: number,
-  links: SocialLinkPayload[]
+  _userId: number,
+  links: { id: string; platform: string; value: string; visible: boolean }[]
 ): Promise<void> {
-  await api.put(`/employees/${userId}/social-links/`, links);
+  // Map the social links editor format to flat profile fields
+  const payload: ProfileUpdateRequest = {};
+  for (const link of links) {
+    const p = link.platform.toLowerCase();
+    if (p === "github" && link.value) payload.github = link.value;
+    else if (p === "linkedin" && link.value) payload.linkedin = link.value;
+    else if (p === "twitter" && link.value) payload.twitter = link.value;
+  }
+  await updateMyProfile(payload);
 }
 
-// TODO: backend endpoint needed — POST /company/{id}/transfer-ownership/ accepting { new_manager_id }
+// TODO: these still need backend endpoints
 export async function transferOwnership(
   companyId: number,
   newManagerId: number
 ): Promise<void> {
+  const { api } = await import("@/lib/api/api-util");
   await api.post(`/company/${companyId}/transfer-ownership/`, {
     new_manager_id: newManagerId,
   });
 }
 
-// TODO: backend endpoint needed — POST /company/{id}/archive/ (no body required)
 export async function archiveCompany(companyId: number): Promise<void> {
+  const { api } = await import("@/lib/api/api-util");
   await api.post(`/company/${companyId}/archive/`);
 }
 
-// TODO: backend endpoint needed — DELETE /company/{id}/ (hard delete, irreversible)
 export async function deleteCompany(companyId: number): Promise<void> {
+  const { api } = await import("@/lib/api/api-util");
   await api.delete(`/company/${companyId}/`);
 }
