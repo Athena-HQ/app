@@ -27,12 +27,12 @@ export function StatsOverview({ employee }: StatsOverviewProps) {
             subtext: "Top 10% in Squad"
         },
         {
-            label: "Performance",
-            value: performance.overallRating,
+            label: "Avg. Rating",
+            value: performance.overallRating > 0 ? `${performance.overallRating.toFixed(1)}` : "—",
             icon: Star,
             color: "text-purple-500",
             bg: "bg-purple-500/10",
-            subtext: `${performance.totalFeedbackCount} Reviews Received`
+            subtext: performance.overallRating > 0 ? `out of 5 · ${performance.totalFeedbackCount} reviews` : "No reviews yet"
         },
         {
             label: "Current Focus",

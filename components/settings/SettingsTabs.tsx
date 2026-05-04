@@ -61,7 +61,7 @@ export function SettingsTabs({ visibleTab }: SettingsTabsProps) {
           label="Company Info"
           sub="Identity, contact, location, manager"
           active
-          onClick={() => {}}
+          onClick={() => { }}
         />
       )}
       {visibleTab === "profile" && (
@@ -70,21 +70,9 @@ export function SettingsTabs({ visibleTab }: SettingsTabsProps) {
           label="My Profile"
           sub="Bio, stats, badges, social"
           active
-          onClick={() => {}}
+          onClick={() => { }}
         />
       )}
-
-      <div className="mt-4 rounded-lg border border-dashed border-border bg-muted/20 p-3">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
-          Coming soon
-        </p>
-        <ul className="text-xs text-muted-foreground flex flex-col gap-1">
-          <li>· Notifications</li>
-          <li>· Integrations</li>
-          <li>· Security &amp; sessions</li>
-          <li>· Billing</li>
-        </ul>
-      </div>
     </nav>
   );
 }
