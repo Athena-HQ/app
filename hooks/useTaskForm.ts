@@ -44,11 +44,11 @@ export function useTaskForm(taskId?: string) {
       taskService.createTask({
         title: data.title,
         description: data.description,
-        assignee_ids: data.assigneeIds.length > 0 ? data.assigneeIds.map(id => parseInt(id, 10)) : null,
+        assignee_ids: data.assigneeIds.map(id => parseInt(id, 10)),
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
-        squad_ids: data.squadIds.length > 0 ? data.squadIds.map(id => parseInt(id, 10)) : null,
+        squad_ids: data.squadIds.map(id => parseInt(id, 10)),
       }),
     onSuccess: async (createdTask: TaskResponse) => {
       await invalidateAfterTaskMutation(String(createdTask.id));
@@ -71,8 +71,8 @@ export function useTaskForm(taskId?: string) {
         priority: data.priority as TaskPriority,
         category: data.category as TaskCategory,
         due_date: data.dueDate ? data.dueDate : null,
-        assignee_ids: data.assigneeIds.length > 0 ? data.assigneeIds.map(id => parseInt(id, 10)) : null,
-        squad_ids: data.squadIds.length > 0 ? data.squadIds.map(id => parseInt(id, 10)) : null,
+        assignee_ids: data.assigneeIds.map(id => parseInt(id, 10)),
+        squad_ids: data.squadIds.map(id => parseInt(id, 10)),
       });
     },
     onSuccess: async () => {
