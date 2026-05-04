@@ -11,6 +11,7 @@ import { getMySquads } from "@/services/squad";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { useTaskStatusUpdate } from "@/hooks/useTaskStatusUpdate";
 import { SubtaskForm } from "./subtask_form";
+import { TaskFeedbackSection } from "./task_feedback_section";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -222,8 +223,8 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                     {(task.assignees && task.assignees.length > 0) || (task.squads && task.squads.length > 0) ? (
                       <div className="flex flex-wrap items-center gap-2">
                         {task.assignees && task.assignees.map((assignee, idx) => (
-                          <div key={assignee.id || idx} className="flex items-center gap-2">
-                            <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit">
+                          <Link key={assignee.id || idx} href={`/employees/${assignee.id}`} className="flex items-center gap-2 group/assignee">
+                            <Badge className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 w-fit group-hover/assignee:bg-sky-500/25 transition-colors cursor-pointer">
                               <User className="h-3 w-3 mr-1" />
                               {assignee.first_name} {assignee.last_name}
                             </Badge>
@@ -232,7 +233,7 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                                 · {assignee.role}
                               </span>
                             )}
-                          </div>
+                          </Link>
                         ))}
                         {task.squads && task.squads.map((squad, idx) => (
                           <Badge key={squad.id || idx} className="text-xs bg-purple-500/15 text-purple-400 border-purple-500/25 w-fit">
@@ -267,8 +268,15 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                   <MetadataItem
                     icon={User}
                     label="Assigned By"
-                    value={task.assigned_by ? `${assignerName}${task.assigned_by.role ? ` · ${task.assigned_by.role}` : ""}` : undefined}
-                  />
+                  >
+                    {task.assigned_by ? (
+                      <Link href={`/employees/${task.assigned_by.id}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                        {assignerName}{task.assigned_by.role ? ` · ${task.assigned_by.role}` : ""}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </MetadataItem>
 
                   <MetadataItem icon={Flag} label="Status">
                     {canUpdateStatus ? (
@@ -411,6 +419,8 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                 </div>
               </>
             )}
+
+            <TaskFeedbackSection task={task} />
           </div>
         </FramePanel>
       </Frame>

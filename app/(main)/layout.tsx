@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth-context";
 
+import { NotificationBell } from "@/components/layout/NotificationBell";
+
 const guardsDisabled =
   process.env.NEXT_PUBLIC_DISABLE_AUTH_GUARDS === "true";
 
@@ -46,6 +48,9 @@ export default function MainLayout({
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex flex-1 items-center gap-2 px-3">
             <SidebarTrigger className="-ms-4" />
+          </div>
+          <div className="flex items-center gap-2 px-3">
+            <NotificationBell />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 lg:gap-6 max-w-7xl w-full mx-auto">

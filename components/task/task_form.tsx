@@ -137,7 +137,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
     <Frame>
       <FramePanel>
         <form
-          onSubmit={handleSubmit(onSubmit as any)}
+          onSubmit={handleSubmit(onSubmit as (data: Record<string, unknown>) => void)}
           className="flex flex-col gap-6"
         >
           <FormSection icon={FileText} title="Basic Information">

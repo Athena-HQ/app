@@ -246,7 +246,7 @@ export function SquadForm({
                     <div className="space-y-4">
                       <Label>Staff the Squad (Manual Allocation)</Label>
                       <p className="text-sm text-foreground/70 mb-4">
-                        Manually select members to fill the roles you've defined.
+                        Manually select members to fill the roles you&apos;ve defined.
                       </p>
 
                       <Controller

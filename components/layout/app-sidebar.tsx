@@ -29,6 +29,7 @@ import {
   RiSunLine,
   RiMoonLine,
   RiSettings3Line,
+  RiNotification3Line,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
@@ -148,9 +149,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     url: "/my-squad",
     icon: RiTeamLine,
   };
+  const notificationsItem = {
+    title: "Notifications",
+    url: "/notifications",
+    icon: RiNotification3Line,
+  };
   const sectionsItems = [
     ...data.navMain[0].items,
     ...(canSeeMySquad ? [mySquadItem] : []),
+    notificationsItem,
   ];
   return (
     <Sidebar {...props}>
