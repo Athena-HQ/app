@@ -38,7 +38,7 @@ export default function CompanyPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[280px] text-center px-4">
         <p className="text-muted-foreground">
-          You don't have access to company details or your org isn't set up yet.
+          You don&apos;t have access to company details or your org isn&apos;t set up yet.
         </p>
       </div>
     );

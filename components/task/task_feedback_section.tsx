@@ -72,7 +72,6 @@ function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
   const reviewer = feedback.reviewer_detail;
   const reviewerName = `${reviewer.first_name} ${reviewer.last_name}`.trim() || reviewer.email;
   const totalStars = feedback.rating;
-  const maxStars = 25;
   const avgStars = (totalStars / 5).toFixed(1);
 
   return (
