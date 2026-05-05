@@ -51,7 +51,7 @@ function StarRating({
             className={cn(
               "h-5 w-5 transition-colors",
               star <= display
-                ? "fill-[#14a800] text-[#14a800]"
+                ? "fill-amber-400 text-amber-400"
                 : "fill-transparent text-muted-foreground/20"
             )}
           />
