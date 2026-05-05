@@ -106,8 +106,8 @@ export function TaskDetails({ task }: TaskDetailsProps) {
     isAssignee || isSquadMember || assignerId === currentUserId;
   const needsReview =
     task.status === "completed" && assignerId === currentUserId;
-
-
+  const isUnderReview =
+    task.status === "under_review" && assignerId === currentUserId;
   const canCreateSubtask =
     assignerId === currentUserId ||
     isAssignee ||
@@ -121,8 +121,12 @@ export function TaskDetails({ task }: TaskDetailsProps) {
     statusUpdate.mutate({ taskId: String(task.id), status: newStatus });
   };
 
-  const handleMarkAsReviewed = () => {
+  const handleStartReview = () => {
     statusUpdate.mutate({ taskId: String(task.id), status: "under_review" });
+  };
+
+  const handleMarkAsReviewed = () => {
+    statusUpdate.mutate({ taskId: String(task.id), status: "reviewed" });
   };
 
   const subtasks: SubtaskResponse[] = task.subtasks ?? [];
@@ -187,6 +191,34 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           This task has been completed and is awaiting your review.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleStartReview}
+                        disabled={statusUpdate.isPending}
+                        size="sm"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        {statusUpdate.isPending ? "Updating..." : "Start Review"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isUnderReview && (
+              <div className="rounded-lg border-2 border-blue-500/50 bg-blue-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground mb-1">
+                          Under Review
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          You are currently reviewing this task.
                         </p>
                       </div>
                       <Button

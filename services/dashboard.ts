@@ -6,6 +6,7 @@ export interface DashboardStatsResponse {
   in_progress: number;
   under_review: number;
   done: number;
+  reviewed?: number;
   on_hold: number;
   total: number;
 }
@@ -81,7 +82,7 @@ export interface TaskCompletionData {
 
 function calculateXPFromTasks(tasks: Task[]): number {
   const completedTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "under_review"
+    (t) => t.status === "completed" || t.status === "under_review" || t.status === "reviewed"
   );
 
   let xp = 0;
@@ -137,7 +138,7 @@ function calculateLevel(xp: number): { level: number; xpToNextLevel: number; tot
 function generateBadges(tasks: Task[]): Badge[] {
   const badges: Badge[] = [];
   const completedCount = tasks.filter(
-    (t) => t.status === "completed" || t.status === "under_review"
+    (t) => t.status === "completed" || t.status === "under_review" || t.status === "reviewed"
   ).length;
 
   if (completedCount >= 10) {
@@ -188,7 +189,7 @@ function generateBadges(tasks: Task[]): Badge[] {
 
   const highPriorityTasks = tasks.filter(
     (t) =>
-      (t.status === "completed" || t.status === "under_review") &&
+      (t.status === "completed" || t.status === "under_review" || t.status === "reviewed") &&
       (t.priority === "high" || t.priority === "critical")
   ).length;
   if (highPriorityTasks >= 20) {
@@ -206,7 +207,7 @@ function generateBadges(tasks: Task[]): Badge[] {
 
 function generateAchievements(tasks: Task[]): Achievement[] {
   const completedCount = tasks.filter(
-    (t) => t.status === "completed" || t.status === "under_review"
+    (t) => t.status === "completed" || t.status === "under_review" || t.status === "reviewed"
   ).length;
 
   return [
@@ -242,7 +243,7 @@ function generateTaskCompletionData(
   months: number
 ): TaskCompletionData[] {
   const completedTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "under_review"
+    (t) => t.status === "completed" || t.status === "under_review" || t.status === "reviewed"
   );
 
   const endDate = new Date();

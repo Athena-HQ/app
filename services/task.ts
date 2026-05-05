@@ -6,6 +6,7 @@ export type TaskStatus =
   | "in_progress"
   | "completed"
   | "under_review"
+  | "reviewed"
   | "on_hold";
 export type TaskPriority = "low" | "medium" | "high" | "critical";
 export type TaskCategory =
@@ -231,6 +232,7 @@ export const TASK_STATUSES: TaskStatus[] = [
   "in_progress",
   "completed",
   "under_review",
+  "reviewed",
   "on_hold",
 ];
 
