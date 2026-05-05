@@ -108,11 +108,11 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
   const { data: feedbacks = [], isLoading } = useQuery({
     queryKey: ["taskFeedback", task.id],
     queryFn: () => listFeedbackForTask(task.id),
-    enabled: task.status === "completed",
+    enabled: ["completed", "under_review", "reviewed"].includes(task.status),
     staleTime: 1000 * 60,
   });
 
-  if (task.status !== "completed") return null;
+  if (!["completed", "under_review", "reviewed"].includes(task.status)) return null;
 
   const currentUserId = appUser ? appUser.id : null;
   const isAssigner = task.assigned_by && currentUserId === task.assigned_by.id;

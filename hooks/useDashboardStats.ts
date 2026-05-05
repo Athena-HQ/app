@@ -82,7 +82,7 @@ export function useDashboardStats() {
     );
     const todoTasks = assignedTasks.filter((t) => t.status === "assigned");
     const doneTasks = assignedTasks.filter(
-      (t) => t.status === "completed" || t.status === "under_review"
+      (t) => t.status === "completed" || t.status === "under_review" || t.status === "reviewed"
     );
     const onHoldTasks = assignedTasks.filter(
       (t) =>
@@ -94,7 +94,7 @@ export function useDashboardStats() {
 
     const totalAssigned = apiStats?.total ?? assignedTasks.length;
     const doneCount = apiStats
-      ? apiStats.done + apiStats.under_review
+      ? apiStats.done + apiStats.under_review + (apiStats.reviewed ?? 0)
       : doneTasks.length;
     const completionRate =
       totalAssigned > 0 ? (doneCount / totalAssigned) * 100 : 0;
@@ -131,7 +131,7 @@ export function useDashboardStats() {
     const inProgressCount = apiStats?.in_progress ?? inProgressTasks.length;
     const doneCountForWidget =
       apiStats != null
-        ? apiStats.done + apiStats.under_review
+        ? apiStats.done + apiStats.under_review + (apiStats.reviewed ?? 0)
         : doneTasks.length;
     const onHoldCount = apiStats?.on_hold ?? onHoldTasks.length;
 

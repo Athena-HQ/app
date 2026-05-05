@@ -18,6 +18,7 @@ const statusLabels: Record<TaskStatus, string> = {
   in_progress: "In Progress",
   completed: "Completed",
   under_review: "Under Review",
+  reviewed: "Reviewed",
   on_hold: "On Hold",
 };
 
