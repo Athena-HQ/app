@@ -16,6 +16,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon, Users, User, GitBranch } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,9 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
       id: "due_date",
     },
   ]);
+
+  const { appUser } = useCurrentAppUser();
+  const currentUserName = appUser ? appUser.name : null;
 
   const columns: ColumnDef<TaskListResponse>[] = useMemo(() => [
     {
@@ -147,12 +151,23 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
             )}
             {(assignment_type === "individual" || assignment_type === "both") && assigned_to_name && (
               <div className="flex flex-wrap gap-1">
-                {assigned_to_name.split(', ').map((name, i) => (
-                  <Badge key={i} className="text-xs bg-sky-500/15 text-sky-400 border-sky-500/25 hover:bg-sky-500/20 w-fit">
-                    <User className="h-3 w-3 mr-1" />
-                    {name}
-                  </Badge>
-                ))}
+                {assigned_to_name.split(', ').map((name, i) => {
+                  const isMe = name === currentUserName;
+                  return (
+                    <Badge 
+                      key={i} 
+                      className={cn(
+                        "text-xs w-fit",
+                        isMe 
+                          ? "bg-primary/15 text-primary border-primary/25 hover:bg-primary/20"
+                          : "bg-sky-500/15 text-sky-400 border-sky-500/25 hover:bg-sky-500/20"
+                      )}
+                    >
+                      <User className="h-3 w-3 mr-1" />
+                      {isMe ? "Me" : name}
+                    </Badge>
+                  );
+                })}
               </div>
             )}
             {assignment_type === "none" && (
@@ -166,11 +181,15 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
     },
     {
       accessorKey: "assigned_by_name",
-      cell: ({ row }: { row: Row<TaskListResponse> }) => (
-        <div className="text-sm text-muted-foreground">
-          {row.original.assigned_by_name ?? "—"}
-        </div>
-      ),
+      cell: ({ row }: { row: Row<TaskListResponse> }) => {
+        const name = row.original.assigned_by_name;
+        const isMe = name === currentUserName;
+        return (
+          <div className="text-sm text-muted-foreground">
+            {isMe ? "Me" : (name ?? "—")}
+          </div>
+        );
+      },
       header: "Assigned By",
       size: 150,
     },

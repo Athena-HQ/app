@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getMyXp, getMyBadges } from "@/services/gamification";
 import { getDashboardStats } from "@/services/dashboard";
 import { updateEmployeeProfile, updateSocialLinks } from "@/services/settings";
+import { updateMyProfile, type ProfileUpdateRequest } from "@/services/employee";
 import type { CurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { SocialLinksEditor, type SocialLink } from "./SocialLinksEditor";
 import { SaveBar } from "./SaveBar";
@@ -187,26 +188,25 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { mutateAsync: saveProfile } = useMutation({
-    mutationFn: (values: ProfileFormValues) =>
-      updateEmployeeProfile(appUser.id, {
+  const { mutateAsync: saveFullProfile } = useMutation({
+    mutationFn: async (values: ProfileFormValues) => {
+      const payload: ProfileUpdateRequest = {
         first_name: values.first_name,
         last_name: values.last_name,
         bio: values.bio,
-      }),
-  });
+      };
 
-  const { mutateAsync: saveSocials } = useMutation({
-    mutationFn: (links: SocialLink[]) =>
-      updateSocialLinks(
-        appUser.id,
-        links.map((s) => ({
-          id: s.id,
-          platform: s.platform,
-          value: s.value,
-          visible: s.visible,
-        }))
-      ),
+      for (const link of socials) {
+        const p = link.platform.toLowerCase();
+        // If visible is false, we clear the link by sending an empty string
+        const val = link.visible ? link.value : "";
+        if (p === "github") payload.github = val;
+        else if (p === "linkedin") payload.linkedin = val;
+        else if (p === "twitter") payload.twitter = val;
+      }
+
+      return updateMyProfile(payload);
+    },
   });
 
   const initials = (
@@ -246,12 +246,12 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
 
   const onSubmit = async (values: ProfileFormValues) => {
     try {
-      await Promise.all([saveProfile(values), saveSocials(socials)]);
+      await saveFullProfile(values);
       toast.success("Profile saved");
       reset(values);
       setSocialsDirty(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save profile");
+      toast.error(err instanceof Error ? err.message : "Failed to save profile. Make sure URLs are valid.");
     }
   };
 

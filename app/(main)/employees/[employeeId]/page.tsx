@@ -54,12 +54,12 @@ function mapToEmployeeProfile(
     },
     taskAnalytics: {
       totalTasksCompleted: data.completed_task_count ?? 0,
-      tasksInProgress: 0,
-      tasksToDo: 0,
-      tasksOnHold: 0,
+      tasksInProgress: data.in_progress_task_count ?? 0,
+      tasksToDo: data.to_do_task_count ?? 0,
+      tasksOnHold: data.on_hold_task_count ?? 0,
       completionRate:
-        data.task_count > 0
-          ? Math.round((data.completed_task_count / data.task_count) * 100)
+        (data.task_count ?? 0) > 0
+          ? Math.round(((data.completed_task_count ?? 0) / (data.task_count ?? 1)) * 100)
           : 0,
     },
     performance: {
