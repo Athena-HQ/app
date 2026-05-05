@@ -37,22 +37,22 @@ function StarRating({
   const display = hovered || value;
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5 items-center">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          className="p-0 transition-transform duration-100 hover:scale-125 cursor-pointer"
+          className="p-0 transition-transform duration-100 hover:scale-110 cursor-pointer flex items-center justify-center"
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
           onClick={() => onChange(star as FeedbackAttributeValue)}
         >
           <Star
             className={cn(
-              "h-7 w-7 transition-colors",
+              "h-5 w-5 transition-colors",
               star <= display
-                ? "fill-amber-400 text-amber-400"
-                : "fill-transparent text-muted-foreground/30"
+                ? "fill-[#14a800] text-[#14a800]"
+                : "fill-transparent text-muted-foreground/20"
             )}
           />
         </button>
@@ -151,18 +151,18 @@ function AssigneeFeedbackForm({
             </Badge>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-5 mb-5">
+          <div className="flex flex-col gap-3 mb-6 mt-4">
             {FEEDBACK_ATTRIBUTES.map((attr) => (
-              <div key={attr.key} className="flex flex-col gap-2">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                  {attr.label}
-                </span>
+              <div key={attr.key} className="flex items-center gap-6">
                 <StarRating
                   value={ratings[attr.key]}
                   onChange={(v) =>
                     setRatings((prev) => ({ ...prev, [attr.key]: v }))
                   }
                 />
+                <span className="text-[15px] font-medium text-foreground">
+                  {attr.label}
+                </span>
               </div>
             ))}
           </div>
