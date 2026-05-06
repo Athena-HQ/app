@@ -1,20 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listFeedbackForTask,
 } from "@/services/feedback";
 import { FeedbackCard } from "@/components/feedback/feedback_card";
+import { FeedbackForm } from "@/components/feedback/feedback_form";
 import type { TaskResponse } from "@/services/task";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Star, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { Star } from "lucide-react";
 
 export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
   const { appUser } = useCurrentAppUser();
+  const queryClient = useQueryClient();
 
   const { data: feedbacks = [], isLoading } = useQuery({
     queryKey: ["taskFeedback", task.id],
@@ -28,7 +29,7 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
   const currentUserId = appUser ? appUser.id : null;
   const isAssigner = task.assigned_by && currentUserId === task.assigned_by.id;
 
-  // Check if there are assignees still needing feedback (exclude self)
+  // Determine which assignees/squads still need feedback from this assigner
   const assigneesWithoutFeedback = isAssigner
     ? (task.assignees || []).filter(
         (assignee) =>
@@ -52,55 +53,58 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
       )
     : [];
 
-  const hasPendingFeedback = assigneesWithoutFeedback.length > 0 || squadsWithoutFeedback.length > 0;
+  const handleFeedbackSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["taskFeedback", task.id] });
+  };
 
   return (
     <>
-      <Separator />
-      <div className="py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <Star className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold">Feedback</h2>
-              {feedbacks.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  {feedbacks.length} review{feedbacks.length !== 1 ? 's' : ''} received
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">No feedback yet</p>
-              )}
-            </div>
-          </div>
-
-          {/* Give Feedback button — only for assigner with pending feedback */}
-          {hasPendingFeedback && (
-            <Button asChild size="sm" variant="default" className="shadow-sm">
-              <Link href={`/tasks/${task.id}/feedback`}>
-                <Star className="h-4 w-4 mr-2" />
-                Give Feedback
-                <ArrowRight className="h-4 w-4 ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            </Button>
+      <Separator className="my-8" />
+      <div className="space-y-6">
+        <div className="flex items-center gap-2.5">
+          <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Feedback</h2>
+          {feedbacks.length > 0 && (
+            <Badge variant="secondary" className="text-xs h-6 px-2 font-bold">
+              {feedbacks.length}
+            </Badge>
           )}
         </div>
 
-        {/* Existing feedback display */}
+        {/* Feedback forms for assignees that still need feedback */}
+        {(assigneesWithoutFeedback.length > 0 || squadsWithoutFeedback.length > 0) && (
+          <div className="space-y-4">
+            {assigneesWithoutFeedback.map((assignee) => (
+              <FeedbackForm
+                key={`user-${assignee.id}`}
+                task={task}
+                targetUser={assignee}
+                onSuccess={handleFeedbackSuccess}
+              />
+            ))}
+            {squadsWithoutFeedback.map((squad) => (
+              <FeedbackForm
+                key={`squad-${squad.id}`}
+                task={task}
+                targetSquad={squad}
+                onSuccess={handleFeedbackSuccess}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Existing feedback */}
         {isLoading ? (
-          <div className="text-sm text-muted-foreground animate-pulse py-8 text-center bg-muted/10 rounded-lg border border-dashed">
-            Loading feedback…
+          <div className="text-sm text-muted-foreground animate-pulse py-8 text-center bg-muted/5 rounded-2xl border border-dashed border-border/40">
+            Loading performance feedback…
           </div>
         ) : feedbacks.length === 0 ? (
-          <div className="rounded-xl border border-dashed bg-muted/20 p-8 text-center">
-            <div className="h-12 w-12 bg-muted/40 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Star className="h-6 w-6 text-muted-foreground/50" />
-            </div>
-            <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
-              {isAssigner && hasPendingFeedback
-                ? "Click \"Give Feedback\" to rate the assignees' performance."
-                : "No feedback has been recorded for this task yet."}
+          <div className="rounded-2xl border border-dashed bg-muted/20 p-10 text-center">
+            <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground font-medium max-w-[250px] mx-auto">
+              {isAssigner
+                ? "Use the forms above to provide performance feedback for the team."
+                : "No performance feedback has been recorded for this task yet."}
             </p>
           </div>
         ) : (
