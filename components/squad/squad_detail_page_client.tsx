@@ -15,7 +15,6 @@ import { getSquad, type SquadResponse } from "@/services/squad";
 import { getSquadTasks, type TaskListResponse } from "@/services/task";
 import { queryKeys } from "@/lib/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 
 type SquadDetailPageClientProps = {
   squadId: string;
@@ -25,7 +24,6 @@ export default function SquadDetailPageClient({
   squadId,
 }: SquadDetailPageClientProps) {
   const numericId = parseInt(squadId, 10);
-  const { appUser } = useCurrentAppUser();
 
   const { data: squad, isLoading: isSquadLoading } = useQuery<SquadResponse>({
     queryKey: queryKeys.squads.detail(squadId),
