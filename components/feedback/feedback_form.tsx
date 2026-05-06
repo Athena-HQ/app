@@ -12,7 +12,7 @@ import { feedbackFormSchema, type FeedbackFormValues } from "@/lib/validations/f
 import { feedbackService, FEEDBACK_ATTRIBUTES, type FeedbackAttributeValue } from "@/services/feedback";
 import type { TaskResponse } from "@/services/task";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
-import { Loader2, Star, Users, User, ArrowRight, CheckCircle2, Quote } from "lucide-react";
+import { Loader2, Star, MessageSquare, Users, User, ArrowRight, CheckCircle2, Quote } from "lucide-react";
 import { FormError } from "@/components/form_error";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
