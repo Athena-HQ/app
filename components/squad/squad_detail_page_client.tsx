@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, Edit, Users, Code, ClipboardList } from "lucide-react";
+import { ArrowLeft, Edit, Users, Code, ClipboardList, MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,9 +69,7 @@ export default function SquadDetailPageClient({
         .filter(Boolean)
     : [];
 
-  const isSquadLead = squad.squad_lead?.id === appUser?.id;
-  const isManagement = ['company manager', 'ceo', 'cto', 'hr'].includes(appUser?.role || '');
-  const canEdit = isSquadLead || isManagement;
+
 
   return (
     <motion.div
@@ -93,12 +91,20 @@ export default function SquadDetailPageClient({
             <p className="text-muted-foreground mt-1">{squad.description}</p>
           )}
         </div>
-        <Button asChild variant="secondary" size="sm">
-          <Link href={`/squads/${squad.id}/edit`}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Squad
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="info" size="sm">
+            <Link href={`/squads/${squad.id}/feedback`}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Feedbacks
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/squads/${squad.id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Squad
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Squad Info Card */}

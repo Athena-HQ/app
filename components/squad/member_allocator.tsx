@@ -8,7 +8,7 @@ interface MemberAllocatorProps {
 }
 
 export function MemberAllocator({ roles = {}, members = [], onChange }: MemberAllocatorProps) {
-  const roleEntries = Object.entries(roles).filter(([_, count]) => count > 0);
+  const roleEntries = Object.entries(roles).filter(([, count]) => count > 0);
 
   if (roleEntries.length === 0) {
     return (
