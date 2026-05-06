@@ -12,14 +12,19 @@ export interface FeedbackResponse {
     last_name: string;
     role: string | null;
   };
-  to_app_user: number;
+  to_app_user: number | null;
   to_app_user_detail: {
     id: number;
     email: string;
     first_name: string;
     last_name: string;
     role: string | null;
-  };
+  } | null;
+  to_squad: number | null;
+  to_squad_detail: {
+    id: number;
+    name: string;
+  } | null;
   task: number | null;
   task_title: string | null;
   communication: number;
@@ -33,7 +38,8 @@ export interface FeedbackResponse {
 }
 
 export interface CreateFeedbackRequest {
-  to_app_user: number;
+  to_app_user?: number | null;
+  to_squad?: number | null;
   task?: number | null;
   communication: FeedbackAttributeValue;
   quality_of_work: FeedbackAttributeValue;
@@ -59,6 +65,11 @@ export async function listFeedback(toAppUserId?: number): Promise<FeedbackRespon
   return Array.isArray(response) ? response : [];
 }
 
+export async function listFeedbackForSquad(squadId: number): Promise<FeedbackResponse[]> {
+  const response = await api.get<FeedbackResponse[]>(`/feedback/?to_squad=${squadId}`);
+  return Array.isArray(response) ? response : [];
+}
+
 export async function listFeedbackForTask(taskId: number): Promise<FeedbackResponse[]> {
   const response = await api.get<FeedbackResponse[]>(`/feedback/?task=${taskId}`);
   return Array.isArray(response) ? response : [];
@@ -79,6 +90,7 @@ export async function deleteFeedback(id: number): Promise<void> {
 export const feedbackService = {
   listFeedback,
   listFeedbackForTask,
+  listFeedbackForSquad,
   getFeedback,
   createFeedback,
   deleteFeedback,

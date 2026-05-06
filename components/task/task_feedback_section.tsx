@@ -4,103 +4,16 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   listFeedbackForTask,
-  FEEDBACK_ATTRIBUTES,
   type FeedbackResponse,
 } from "@/services/feedback";
+import { FeedbackCard } from "@/components/feedback/feedback_card";
 import type { TaskResponse } from "@/services/task";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
-import { Star, MessageSquare, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-// ─── Star Rating Display (readonly) ────────────────────────────────────────
-
-function StarDisplay({ value }: { value: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={cn(
-            "h-4 w-4",
-            star <= value
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-muted-foreground/30"
-          )}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Feedback Card (display existing feedback) ──────────────────────────────
-
-function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
-  const reviewer = feedback.reviewer_detail;
-  const reviewerName = `${reviewer.first_name} ${reviewer.last_name}`.trim() || reviewer.email;
-  const avgStars = (feedback.rating / 5).toFixed(1);
-
-  return (
-    <Card className="border-border/50 bg-card/60 backdrop-blur-sm">
-      <CardContent className="pt-5 pb-4">
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/employees/${reviewer.id}`}
-              className="text-sm font-semibold hover:text-primary transition-colors"
-            >
-              {reviewerName}
-            </Link>
-            {reviewer.role && (
-              <Badge variant="outline" className="text-[10px] capitalize">
-                {reviewer.role}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            <span className="text-sm font-bold">{avgStars}</span>
-            <span className="text-xs text-muted-foreground">/ 5</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
-          {FEEDBACK_ATTRIBUTES.map((attr) => (
-            <div key={attr.key} className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                {attr.label}
-              </span>
-              <StarDisplay value={feedback[attr.key] as number} />
-            </div>
-          ))}
-        </div>
-
-        {feedback.comment && (
-          <div className="flex gap-2 mt-2 pt-2 border-t border-border/50">
-            <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-sm text-foreground/80 leading-relaxed">
-              {feedback.comment}
-            </p>
-          </div>
-        )}
-
-        <p className="text-[10px] text-muted-foreground mt-2">
-          {new Date(feedback.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── Main Section ───────────────────────────────────────────────────────────
 
 export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
   const { appUser } = useCurrentAppUser();
@@ -121,7 +34,7 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
   const assigneesWithoutFeedback = isAssigner
     ? (task.assignees || []).filter(
         (assignee) =>
-          assignee.id !== currentUserId && // No self-feedback
+          assignee.id !== currentUserId &&
           !feedbacks.some(
             (f) =>
               f.reviewer === currentUserId &&
@@ -130,30 +43,47 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
       )
     : [];
 
-  const hasPendingFeedback = assigneesWithoutFeedback.length > 0;
+  const squadsWithoutFeedback = isAssigner
+    ? (task.squads || []).filter(
+        (squad) =>
+          !feedbacks.some(
+            (f) =>
+              f.reviewer === currentUserId &&
+              f.to_squad === squad.id
+          )
+      )
+    : [];
+
+  const hasPendingFeedback = assigneesWithoutFeedback.length > 0 || squadsWithoutFeedback.length > 0;
 
   return (
     <>
       <Separator />
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Feedback</h2>
-            {feedbacks.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {feedbacks.length}
-              </Badge>
-            )}
+      <div className="py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Star className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">Feedback</h2>
+              {feedbacks.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {feedbacks.length} review{feedbacks.length !== 1 ? 's' : ''} received
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">No feedback yet</p>
+              )}
+            </div>
           </div>
 
           {/* Give Feedback button — only for assigner with pending feedback */}
           {hasPendingFeedback && (
-            <Button asChild size="sm">
+            <Button asChild size="sm" variant="default" className="shadow-sm">
               <Link href={`/tasks/${task.id}/feedback`}>
                 <Star className="h-4 w-4 mr-2" />
                 Give Feedback
-                <ArrowRight className="h-4 w-4 ml-1" />
+                <ArrowRight className="h-4 w-4 ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
               </Link>
             </Button>
           )}
@@ -161,20 +91,22 @@ export function TaskFeedbackSection({ task }: { task: TaskResponse }) {
 
         {/* Existing feedback display */}
         {isLoading ? (
-          <div className="text-sm text-muted-foreground animate-pulse py-4 text-center">
+          <div className="text-sm text-muted-foreground animate-pulse py-8 text-center bg-muted/10 rounded-lg border border-dashed">
             Loading feedback…
           </div>
         ) : feedbacks.length === 0 ? (
-          <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center">
-            <Star className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed bg-muted/20 p-8 text-center">
+            <div className="h-12 w-12 bg-muted/40 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Star className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm text-muted-foreground max-w-[200px] mx-auto">
               {isAssigner && hasPendingFeedback
-                ? "Click \"Give Feedback\" to rate the assignees."
-                : "No feedback has been given yet."}
+                ? "Click \"Give Feedback\" to rate the assignees' performance."
+                : "No feedback has been recorded for this task yet."}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4">
             {feedbacks.map((feedback) => (
               <FeedbackCard key={feedback.id} feedback={feedback} />
             ))}
