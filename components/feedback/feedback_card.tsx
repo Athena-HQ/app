@@ -125,7 +125,7 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
               <div className="relative bg-white/[0.03] rounded-3xl p-6 border border-white/5 shadow-sm group-hover:bg-white/[0.04] transition-colors">
                 <Quote className="absolute -top-3 -left-1 h-7 w-7 text-white/5 fill-white/5 -rotate-12" />
                 <p className="text-sm text-white/60 leading-relaxed relative z-10 font-medium italic">
-                  "{feedback.comment}"
+                  &quot;{feedback.comment}&quot;
                 </p>
               </div>
             )}
