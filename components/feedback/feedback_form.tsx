@@ -37,13 +37,13 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
             className={cn(
               "h-6 w-6 transition-colors",
               star <= value 
-                ? "fill-yellow-400 text-yellow-400" 
-                : "text-slate-200 group-hover:text-slate-300"
+                ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.2)]" 
+                : "text-white/5 group-hover:text-white/20"
             )}
           />
         </button>
       ))}
-      <span className="ml-3 text-base font-bold text-slate-400 w-6">{value}</span>
+      <span className="ml-4 text-sm font-black text-white/20 w-4 tabular-nums">{value}</span>
     </div>
   );
 }
@@ -67,11 +67,11 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
   } = useForm<FeedbackFormValues>({
     resolver: zodResolver(feedbackFormSchema),
     defaultValues: {
-      communication: 5,
-      quality_of_work: 5,
-      timeliness: 5,
-      teamwork: 5,
-      initiative: 5,
+      communication: 0,
+      quality_of_work: 0,
+      timeliness: 0,
+      teamwork: 0,
+      initiative: 0,
       comment: "",
     },
   });
@@ -98,7 +98,7 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
       setValue("to_app_user", undefined);
     }
     // Scroll to form on mobile
-    if (window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
       setTimeout(() => {
         document.getElementById("review-form-anchor")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -121,22 +121,19 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
         comment: data.comment,
       });
       
-      // If we finished one, clear it and show success or move to next
       const nextTarget = allTargets.find(t => t.id !== selectedTargetId);
       if (nextTarget) {
-        // More reviews pending
         setSelectedTargetId(null);
         reset({
-          communication: 5,
-          quality_of_work: 5,
-          timeliness: 5,
-          teamwork: 5,
-          initiative: 5,
+          communication: 0,
+          quality_of_work: 0,
+          timeliness: 0,
+          teamwork: 0,
+          initiative: 0,
           comment: "",
         });
         router.refresh();
       } else {
-        // All done
         router.push(`/tasks/${task.id}`);
         router.refresh();
       }
@@ -150,18 +147,18 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
 
   if (allTargets.length === 0) {
     return (
-      <div className="p-12 border-2 border-dashed rounded-3xl bg-slate-50 text-center flex flex-col items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-          <CheckCircle2 className="h-8 w-8 text-green-600" />
+      <div className="p-16 border border-white/5 rounded-[40px] bg-white/[0.02] backdrop-blur-xl text-center flex flex-col items-center gap-6 shadow-2xl">
+        <div className="h-20 w-20 rounded-3xl bg-green-500/10 flex items-center justify-center">
+          <CheckCircle2 className="h-10 w-10 text-green-400" />
         </div>
-        <div className="space-y-1">
-          <h3 className="text-xl font-bold text-slate-900">All caught up!</h3>
-          <p className="text-sm text-slate-500 max-w-xs mx-auto">
-            You have already provided feedback for everyone on this task.
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black text-white tracking-tight">Mission Accomplished!</h3>
+          <p className="text-sm text-white/40 max-w-xs mx-auto font-medium">
+            Every team member and squad on this task has been reviewed.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => router.push(`/tasks/${task.id}`)} className="mt-2 rounded-full px-8">
-          Back to Task
+        <Button variant="secondary" size="lg" onClick={() => router.push(`/tasks/${task.id}`)} className="mt-4 rounded-full px-10 bg-white/5 hover:bg-white/10 text-white border-white/5 font-bold">
+          Return to Task
         </Button>
       </div>
     );
@@ -170,57 +167,57 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
   const currentTarget = allTargets.find(t => t.id === selectedTargetId);
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-12">
       {/* Target Selection Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] flex items-center gap-3">
             <Users className="h-4 w-4" /> 
-            Select who to review ({allTargets.length})
+            Pending Reviews ({allTargets.length})
           </h2>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {allTargets.map((target) => (
             <button
               key={target.id}
               type="button"
               onClick={() => handleSelectTarget(target)}
               className={cn(
-                "flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left group",
+                "flex items-center gap-5 p-6 rounded-[32px] border transition-all text-left group relative overflow-hidden",
                 selectedTargetId === target.id
-                  ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                  : "border-slate-100 bg-white hover:border-slate-300 hover:shadow-sm"
+                  ? "border-yellow-400/50 bg-yellow-400/5 shadow-[0_0_40px_rgba(250,204,21,0.1)] scale-[1.03]"
+                  : "border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10"
               )}
             >
               <Avatar className={cn(
-                "h-10 w-10 border shadow-sm",
-                selectedTargetId === target.id ? "border-primary/20" : "border-slate-100"
+                "h-12 w-12 border shadow-2xl",
+                selectedTargetId === target.id ? "border-yellow-400/30" : "border-white/5"
               )}>
                 <AvatarFallback className={cn(
-                  "font-bold",
-                  target.type === 'squad' ? "bg-purple-100 text-purple-600" : "bg-blue-100 text-blue-600"
+                  "font-black text-lg",
+                  target.type === 'squad' ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"
                 )}>
-                  {target.type === 'squad' ? <Users className="h-4 w-4" /> : target.name[0]}
+                  {target.type === 'squad' ? <Users className="h-5 w-5" /> : target.name[0]}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 z-10">
                 <p className={cn(
-                  "font-bold truncate transition-colors",
-                  selectedTargetId === target.id ? "text-primary" : "text-slate-900"
+                  "font-black truncate transition-colors text-base tracking-tight",
+                  selectedTargetId === target.id ? "text-yellow-400" : "text-white/90"
                 )}>
                   {target.name}
                 </p>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
-                  {target.type === 'squad' ? 'Squad' : 'Team Member'}
+                <p className="text-[9px] uppercase font-black tracking-widest text-white/20 mt-0.5">
+                  {target.type === 'squad' ? 'Squad Unit' : 'Individual'}
                 </p>
               </div>
               {selectedTargetId === target.id ? (
-                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0">
-                  <ArrowRight className="h-3 w-3" />
+                <div className="h-8 w-8 rounded-2xl bg-yellow-400 flex items-center justify-center text-[#111111] shrink-0 shadow-lg">
+                  <ArrowRight className="h-4 w-4 stroke-[3px]" />
                 </div>
               ) : (
-                <ArrowRight className="h-4 w-4 text-slate-200 group-hover:text-slate-400 shrink-0 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-5 w-5 text-white/10 group-hover:text-white/30 shrink-0 transition-all group-hover:translate-x-1" />
               )}
             </button>
           ))}
@@ -234,40 +231,42 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
         {selectedTargetId && currentTarget && (
           <motion.div
             key={selectedTargetId}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-3xl border-2 border-slate-100 p-8 shadow-xl shadow-slate-200/50"
+            initial={{ opacity: 0, scale: 0.98, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -30 }}
+            className="bg-[#111111]/80 backdrop-blur-2xl rounded-[48px] border border-white/5 p-10 md:p-14 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] relative overflow-hidden"
           >
-            <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-50">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400/5 blur-[100px] rounded-full -mr-32 -mt-32" />
+            
+            <div className="flex flex-col md:flex-row items-center gap-6 mb-12 pb-10 border-b border-white/5 relative z-10">
               <div className={cn(
-                "h-12 w-12 rounded-2xl flex items-center justify-center",
-                currentTarget.type === 'squad' ? "bg-purple-100" : "bg-blue-100"
+                "h-20 w-20 rounded-[32px] flex items-center justify-center shadow-2xl",
+                currentTarget.type === 'squad' ? "bg-purple-500/10" : "bg-blue-500/10"
               )}>
-                {currentTarget.type === 'squad' ? <Users className="h-6 w-6 text-purple-600" /> : <User className="h-6 w-6 text-blue-600" />}
+                {currentTarget.type === 'squad' ? <Users className="h-10 w-10 text-purple-400" /> : <User className="h-10 w-10 text-blue-400" />}
               </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">Reviewing {currentTarget.name}</h3>
-                <p className="text-sm text-slate-400 font-medium">Please provide a fair and honest rating based on task performance.</p>
+              <div className="text-center md:text-left">
+                <h3 className="text-3xl font-black text-white tracking-tighter">Reviewing {currentTarget.name}</h3>
+                <p className="text-sm text-white/30 font-bold mt-1 tracking-tight">How was their contribution to this task?</p>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-12 relative z-10">
               {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold border border-red-100 flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+                <div className="p-5 bg-red-500/10 text-red-400 rounded-3xl text-sm font-black border border-red-500/20 flex items-center gap-4">
+                  <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
                   {error}
                 </div>
               )}
 
               <div className="grid grid-cols-1 gap-y-10">
                 {FEEDBACK_ATTRIBUTES.map((attr) => (
-                  <div key={attr.key} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-0.5">
-                      <Label className="text-lg font-bold text-slate-800">
+                  <div key={attr.key} className="flex flex-col md:flex-row md:items-center justify-between gap-6 group/field">
+                    <div className="space-y-1">
+                      <Label className="text-base font-black text-white/80 group-hover/field:text-white transition-colors uppercase tracking-wider">
                         {attr.label}
                       </Label>
-                      <p className="text-xs text-slate-400 font-medium">Rate from 1 to 5 stars</p>
+                      <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">Performance Metric</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Controller
@@ -285,44 +284,45 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
                 ))}
               </div>
 
-              <div className="space-y-3 pt-4">
-                <Label className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  Comment
-                  <span className="text-slate-300 text-sm font-normal">(Optional)</span>
+              <div className="space-y-4 pt-4">
+                <Label className="text-sm font-black text-white/30 uppercase tracking-[0.3em] flex items-center gap-3">
+                  <MessageSquare className="h-4 w-4" />
+                  Written Feedback
+                  <span className="text-white/10 text-[10px] font-black tracking-normal ml-auto">(Optional)</span>
                 </Label>
-                <div className="relative">
-                  <Quote className="absolute left-4 top-4 h-5 w-5 text-slate-200" />
+                <div className="relative group">
+                  <Quote className="absolute left-6 top-6 h-6 w-6 text-white/5 transition-colors group-focus-within:text-yellow-400/20" />
                   <Textarea
-                    placeholder="Share your experience working with them on this task..."
-                    className="min-h-[160px] pl-12 rounded-2xl border-2 border-slate-100 focus:border-primary focus:ring-0 transition-all text-base bg-slate-50/30"
+                    placeholder="Describe their work, speed, and attitude..."
+                    className="min-h-[200px] pl-16 pr-8 py-6 rounded-[32px] border-white/5 bg-white/[0.02] focus:bg-white/[0.04] focus:border-white/10 focus:ring-0 transition-all text-base text-white/80 placeholder:text-white/10 font-medium leading-relaxed shadow-inner"
                     {...register("comment")}
                   />
                 </div>
                 <FormError message={errors.comment?.message} />
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-6">
+              <div className="flex items-center justify-between gap-6 pt-10">
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setSelectedTargetId(null)}
                   disabled={isSubmitting}
-                  className="rounded-full px-6 font-bold text-slate-400 hover:text-slate-600"
+                  className="rounded-full px-8 font-black text-xs uppercase tracking-widest text-white/20 hover:text-white/50 hover:bg-white/5"
                 >
-                  Cancel
+                  Change Target
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="min-w-[180px] h-12 rounded-full font-black text-base shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95"
+                  className="min-w-[220px] h-16 rounded-full font-black text-lg uppercase tracking-tight shadow-[0_20px_50px_rgba(250,204,21,0.15)] bg-yellow-400 text-[#111111] hover:bg-yellow-500 hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Submitting...
+                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                      Publishing...
                     </>
                   ) : (
-                    "Submit Review"
+                    "Publish Review"
                   )}
                 </Button>
               </div>
@@ -332,18 +332,19 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
       </AnimatePresence>
 
       {!selectedTargetId && (
-        <div className="text-center py-20 bg-slate-50/50 rounded-[40px] border-2 border-dashed border-slate-200">
-          <div className="h-20 w-20 bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-6">
-            <Star className="h-10 w-10 text-slate-200" />
+        <div className="text-center py-28 bg-white/[0.01] rounded-[60px] border border-dashed border-white/5 backdrop-blur-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-yellow-400/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+          <div className="h-28 w-28 bg-[#111111] rounded-[40px] shadow-2xl border border-white/5 flex items-center justify-center mx-auto mb-8 relative z-10">
+            <Star className="h-12 w-12 text-white/5 animate-pulse" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Ready to rate?</h3>
-          <p className="text-slate-500 max-w-sm mx-auto mb-8">
-            Select a team member or squad from the list above to provide your performance feedback.
+          <h3 className="text-3xl font-black text-white mb-3 tracking-tighter relative z-10">Performance Hub</h3>
+          <p className="text-white/20 max-w-sm mx-auto mb-10 font-bold text-sm leading-relaxed relative z-10">
+            Select a team member or squad from the grid above to start the performance evaluation.
           </p>
-          <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline" className="bg-white border-slate-200 text-slate-400">Horizontal Stars</Badge>
-            <Badge variant="outline" className="bg-white border-slate-200 text-slate-400">Yellow Icons</Badge>
-            <Badge variant="outline" className="bg-white border-slate-200 text-slate-400">Slate Aesthetic</Badge>
+          <div className="flex items-center justify-center gap-3 relative z-10">
+            <Badge variant="outline" className="bg-white/5 border-white/5 text-[9px] font-black text-white/20 tracking-widest uppercase py-1">Horizontal Stats</Badge>
+            <Badge variant="outline" className="bg-white/5 border-white/5 text-[9px] font-black text-white/20 tracking-widest uppercase py-1">Dark Interface</Badge>
+            <Badge variant="outline" className="bg-white/5 border-white/5 text-[9px] font-black text-white/20 tracking-widest uppercase py-1">Upwork-Style</Badge>
           </div>
         </div>
       )}

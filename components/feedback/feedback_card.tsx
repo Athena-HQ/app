@@ -19,7 +19,7 @@ function StarDisplay({ value }: { value: number }) {
             "h-4 w-4",
             star <= value
               ? "fill-yellow-400 text-yellow-400"
-              : "fill-muted/20 text-muted-foreground/20"
+              : "fill-white/5 text-white/5"
           )}
         />
       ))}
@@ -39,35 +39,40 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
   const avgStars = (feedback.rating / 5).toFixed(1);
 
   return (
-    <Card className="border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-8">
+    <Card className="border border-white/5 shadow-2xl bg-[#111111]/60 backdrop-blur-xl overflow-hidden hover:bg-[#111111]/80 transition-all duration-500 group">
+      <CardContent className="p-8">
+        <div className="flex flex-col md:flex-row gap-10">
           {/* Left Side: Profile & Overall Rating */}
-          <div className="flex flex-col items-center md:items-start gap-4 md:w-1/3 border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-8">
+          <div className="flex flex-col items-center md:items-start gap-6 md:w-1/3 border-b md:border-b-0 md:border-r border-white/5 pb-8 md:pb-0 md:pr-10">
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 border-2 border-slate-50 shadow-sm">
-                <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
-                  {reviewerInitials}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-14 w-14 border border-white/10 shadow-xl">
+                  <AvatarFallback className="bg-white/5 text-white/70 font-black text-lg">
+                    {reviewerInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-yellow-400 rounded-full border-2 border-[#111111] flex items-center justify-center">
+                  <Star className="h-2.5 w-2.5 text-[#111111] fill-[#111111]" />
+                </div>
+              </div>
               <div>
                 <Link
                   href={`/employees/${reviewer.id}`}
-                  className="font-bold text-slate-900 hover:text-primary transition-colors block"
+                  className="font-black text-lg text-white/90 hover:text-yellow-400 transition-colors block tracking-tight"
                 >
                   {reviewerName}
                 </Link>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider h-5 font-bold border-slate-200 text-slate-500">
+                  <span className="text-[10px] uppercase font-black tracking-widest text-white/30">
                     {reviewer.role || "Reviewer"}
-                  </Badge>
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 w-full bg-slate-50 rounded-2xl p-4 flex flex-col items-center justify-center border border-slate-100">
-              <div className="text-3xl font-black text-slate-900 leading-none">{avgStars}</div>
-              <div className="flex gap-0.5 mt-2">
+            <div className="mt-2 w-full bg-white/[0.02] rounded-[32px] p-6 flex flex-col items-center justify-center border border-white/5 shadow-inner">
+              <div className="text-4xl font-black text-white leading-none tracking-tighter">{avgStars}</div>
+              <div className="flex gap-1 mt-3">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
@@ -75,22 +80,22 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
                       "h-4 w-4",
                       star <= Math.round(parseFloat(avgStars))
                         ? "fill-yellow-400 text-yellow-400"
-                        : "fill-slate-200 text-slate-200"
+                        : "fill-white/10 text-white/10"
                     )}
                   />
                 ))}
               </div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
-                Overall Rating
+              <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mt-3">
+                Overall Performance
               </div>
             </div>
 
-            <div className="mt-auto pt-4 flex flex-col gap-1 w-full">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Feedback for</div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700 truncate">{targetName}</span>
+            <div className="mt-auto pt-4 flex flex-col gap-2 w-full">
+              <div className="text-[9px] text-white/20 font-black uppercase tracking-[0.2em]">Feedback for</div>
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-white/70 truncate text-sm">{targetName}</span>
                 {feedback.to_squad_detail && (
-                  <Badge className="bg-info/10 text-info hover:bg-info/15 border-none text-[10px] h-5">
+                  <Badge className="bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border-none text-[9px] font-black h-5 uppercase tracking-wider">
                     Squad
                   </Badge>
                 )}
@@ -99,16 +104,16 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
           </div>
 
           {/* Right Side: Detailed Metrics & Comment */}
-          <div className="flex-1 space-y-6">
-            <div className="grid grid-cols-1 gap-y-3">
+          <div className="flex-1 space-y-8">
+            <div className="grid grid-cols-1 gap-y-4">
               {FEEDBACK_ATTRIBUTES.map((attr) => (
-                <div key={attr.key} className="flex items-center justify-between group">
-                  <span className="text-sm font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
+                <div key={attr.key} className="flex items-center justify-between group/row">
+                  <span className="text-xs font-bold text-white/40 group-hover/row:text-white/80 transition-colors uppercase tracking-wider">
                     {attr.label}
                   </span>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-5">
                     <StarDisplay value={feedback[attr.key] as number} />
-                    <span className="text-xs font-bold text-slate-400 w-4 text-right">
+                    <span className="text-[10px] font-black text-white/20 w-4 text-right tabular-nums">
                       {feedback[attr.key] as number}
                     </span>
                   </div>
@@ -117,24 +122,24 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
             </div>
 
             {feedback.comment && (
-              <div className="relative bg-slate-50/50 rounded-2xl p-5 border border-slate-100 italic">
-                <Quote className="absolute -top-3 -left-1 h-6 w-6 text-slate-200 fill-slate-200 -rotate-12" />
-                <p className="text-sm text-slate-700 leading-relaxed relative z-10">
-                  {feedback.comment}
+              <div className="relative bg-white/[0.03] rounded-3xl p-6 border border-white/5 shadow-sm group-hover:bg-white/[0.04] transition-colors">
+                <Quote className="absolute -top-3 -left-1 h-7 w-7 text-white/5 fill-white/5 -rotate-12" />
+                <p className="text-sm text-white/60 leading-relaxed relative z-10 font-medium italic">
+                  "{feedback.comment}"
                 </p>
               </div>
             )}
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+            <div className="flex items-center justify-between text-[10px] text-white/20 font-black uppercase tracking-widest pt-2">
               {feedback.task_title && (
-                <div className="flex items-center gap-1.5 truncate max-w-[250px]">
+                <div className="flex items-center gap-2 truncate max-w-[250px] hover:text-white/40 transition-colors">
                   <MessageSquare className="h-3.5 w-3.5" />
                   <span>Task: {feedback.task_title}</span>
                 </div>
               )}
-              <div className="ml-auto">
+              <div className="ml-auto opacity-60">
                 {new Date(feedback.created_at).toLocaleDateString("en-US", {
-                  month: "long",
+                  month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
