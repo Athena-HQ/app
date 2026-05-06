@@ -17,7 +17,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getMyXp, getMyBadges } from "@/services/gamification";
 import { getDashboardStats } from "@/services/dashboard";
-import { updateEmployeeProfile, updateSocialLinks } from "@/services/settings";
 import { updateMyProfile, type ProfileUpdateRequest } from "@/services/employee";
 import type { CurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { SocialLinksEditor, type SocialLink } from "./SocialLinksEditor";

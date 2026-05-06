@@ -32,8 +32,8 @@ export default function SquadFeedbackListPage({ params }: { params: Promise<{ sq
 
         const feedbacksData = await feedbackService.listFeedbackForSquad(parseInt(squadId, 10));
         setFeedbacks(feedbacksData);
-      } catch (err: any) {
-        setError(err.message || "Failed to load squad details");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load squad details");
       } finally {
         setLoading(false);
       }
@@ -121,7 +121,7 @@ export default function SquadFeedbackListPage({ params }: { params: Promise<{ sq
           </div>
           <h2 className="text-xl font-semibold mb-2">No feedback yet</h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
-            This squad hasn't received any feedback from completed tasks yet. 
+            This squad hasn&apos;t received any feedback from completed tasks yet. 
             Once an assigner leaves a review, it will appear here.
           </p>
         </motion.div>

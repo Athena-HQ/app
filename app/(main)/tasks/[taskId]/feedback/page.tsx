@@ -30,8 +30,8 @@ export default function TaskFeedbackPage({ params }: { params: Promise<{ taskId:
 
         const feedbacksData = await feedbackService.listFeedbackForTask(parseInt(taskId, 10));
         setExistingFeedbacks(feedbacksData);
-      } catch (err: any) {
-        setError(err.message || "Failed to load task details");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load task details");
       } finally {
         setLoading(false);
       }

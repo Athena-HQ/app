@@ -15,7 +15,6 @@ import {
   invitationFormSchema,
   type InvitationFormValues,
 } from "@/lib/validations/invitation";
-import type { QueryClient } from "@tanstack/react-query";
 
 import { useCurrentAppUser } from "./useCurrentAppUser";
 

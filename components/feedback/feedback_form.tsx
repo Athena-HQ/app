@@ -5,7 +5,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -98,8 +97,8 @@ export function FeedbackForm({ task, existingFeedbacks = [] }: FeedbackFormProps
       });
       router.push(`/tasks/${task.id}`);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "Failed to submit feedback. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to submit feedback. Please try again.");
       setIsSubmitting(false);
     }
   };

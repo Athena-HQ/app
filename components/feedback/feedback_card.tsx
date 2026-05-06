@@ -82,7 +82,7 @@ export function FeedbackCard({ feedback }: { feedback: FeedbackResponse }) {
           <div className="flex gap-2 mt-2 pt-3 border-t border-border/40 italic">
             <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 mt-0.5" />
             <p className="text-sm text-foreground/80 leading-relaxed">
-              "{feedback.comment}"
+              &quot;{feedback.comment}&quot;
             </p>
           </div>
         )}

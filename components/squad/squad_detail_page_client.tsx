@@ -69,9 +69,7 @@ export default function SquadDetailPageClient({
         .filter(Boolean)
     : [];
 
-  const isSquadLead = squad.squad_lead?.id === appUser?.id;
-  const isManagement = ['company manager', 'ceo', 'cto', 'hr'].includes(appUser?.role || '');
-  const canEdit = isSquadLead || isManagement;
+
 
   return (
     <motion.div

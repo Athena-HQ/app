@@ -226,7 +226,7 @@ export function TaskTable({ tasks, isLoading, needsReviewIds }: TaskTableProps) 
       header: "Due Date",
       size: 120,
     },
-  ], [needsReviewIds]);
+  ], [needsReviewIds, currentUserName]);
 
   const tableOptions = useMemo(() => ({
     columns,
