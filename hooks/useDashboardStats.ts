@@ -129,10 +129,7 @@ export function useDashboardStats() {
 
     const todoCount = apiStats?.to_do ?? todoTasks.length;
     const inProgressCount = apiStats?.in_progress ?? inProgressTasks.length;
-    const doneCountForWidget =
-      apiStats != null
-        ? apiStats.done + apiStats.under_review + (apiStats.reviewed ?? 0)
-        : doneTasks.length;
+    const doneCountForWidget = apiStats?.done ?? doneTasks.length;
     const onHoldCount = apiStats?.on_hold ?? onHoldTasks.length;
 
     return {
