@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AppUserResponse } from "@/services/company";
+import Link from "next/link";
 
 function fullName(employee: AppUserResponse): string {
   const name = `${employee.first_name} ${employee.last_name}`.trim();
@@ -30,33 +31,35 @@ export function CompanyMemberCard({
   const isManager = employee.role?.toLowerCase() === "company manager";
 
   return (
-    <Card 
-      className={`border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md ${
-        isManager ? "border-primary/20 bg-primary/5" : ""
-      }`}
-    >
-      <CardContent
-        className={`px-4 flex flex-col items-center justify-center ${
-          isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
+    <Link href={`/employees/${employee.id}`} className="block">
+      <Card 
+        className={`border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${
+          isManager ? "border-primary/20 bg-primary/5" : ""
         }`}
       >
-        <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
-          <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
-            {initials(employee)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="text-center mt-1">
-          <p className={`font-serif leading-none ${isManager ? "text-lg font-medium" : "text-base"}`}>
-            {fullName(employee)}
-          </p>
-        </div>
-        <Badge
-          variant={isManager ? "default" : "secondary"}
-          className={`uppercase tracking-widest rounded-full mt-1 ${isManager ? "text-[11px] px-3 py-1" : "text-[10px] px-2 py-0.5"}`}
+        <CardContent
+          className={`px-4 flex flex-col items-center justify-center ${
+            isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
+          }`}
         >
-          {roleLabel(employee.role)}
-        </Badge>
-      </CardContent>
-    </Card>
+          <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
+            <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
+              {initials(employee)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-center mt-1">
+            <p className={`font-serif leading-none ${isManager ? "text-lg font-medium" : "text-base"}`}>
+              {fullName(employee)}
+            </p>
+          </div>
+          <Badge
+            variant={isManager ? "default" : "secondary"}
+            className={`uppercase tracking-widest rounded-full mt-1 ${isManager ? "text-[11px] px-3 py-1" : "text-[10px] px-2 py-0.5"}`}
+          >
+            {roleLabel(employee.role)}
+          </Badge>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

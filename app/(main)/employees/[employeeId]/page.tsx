@@ -45,6 +45,7 @@ function mapToEmployeeProfile(
       github: data.profile?.github ?? undefined,
       linkedin: data.profile?.linkedin ?? undefined,
       twitter: data.profile?.twitter ?? undefined,
+      extra: data.profile?.social_links ?? [],
     },
     gamification: {
       levelNumber: data.xp_info?.level ?? 0,

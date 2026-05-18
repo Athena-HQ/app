@@ -26,6 +26,7 @@ export interface ProfileResponse {
   github: string | null;
   twitter: string | null;
   avatar_url: string | null;
+  social_links: { platform: string; url: string }[];
 }
 
 export interface ProfileUpdateRequest {
@@ -36,6 +37,7 @@ export interface ProfileUpdateRequest {
   github?: string;
   twitter?: string;
   avatar_url?: string;
+  social_links?: { platform: string; url: string }[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────────────
