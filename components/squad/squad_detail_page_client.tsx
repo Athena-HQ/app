@@ -90,7 +90,7 @@ export default function SquadDetailPageClient({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="info" size="sm">
+          <Button asChild variant="secondary" size="sm">
             <Link href={`/squads/${squad.id}/feedback`}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Feedbacks

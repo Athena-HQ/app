@@ -4,7 +4,7 @@ import { Trash2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { resolvePlatform } from "./platform-registry";
+import { resolvePlatform, resolvePlatformSmart } from "./platform-registry";
 
 export interface SocialLink {
   id: string;
@@ -49,7 +49,7 @@ interface SocialRowProps {
 }
 
 function SocialRow({ entry, onChange, onRemove }: SocialRowProps) {
-  const resolved = resolvePlatform(entry.platform);
+  const resolved = entry.preset ? resolvePlatform(entry.platform) : resolvePlatformSmart(entry.platform, entry.value);
   const Icon = resolved.Icon;
 
   return (

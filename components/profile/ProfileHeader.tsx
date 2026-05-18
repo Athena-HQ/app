@@ -4,14 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Github, Linkedin, Twitter, Globe, MapPin, Calendar, Mail } from "lucide-react";
+import { Github, Linkedin, Twitter, Globe, Calendar, Mail } from "lucide-react";
+import { resolvePlatformFromUrl } from "@/components/settings/platform-registry";
 
 interface ProfileHeaderProps {
     employee: EmployeeProfile;
 }
 
 export function ProfileHeader({ employee }: ProfileHeaderProps) {
-    const { fullName, role, avatarUrl, department, joinDate, socialLinks, gamification, status } = employee;
+    const { fullName, role, avatarUrl, department, joinDate, socialLinks, gamification } = employee;
 
     const xpProgress = (gamification.currentXp / gamification.xpToNextLevel) * 100;
 
@@ -53,33 +54,39 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
                                     <span className="font-medium text-foreground/80">{role}</span>
                                     <span>•</span>
                                     <span>{department}</span>
-                                    {status === 'active' && (
-                                        <Badge variant="outline" className="ml-2 border-green-200 bg-green-50 text-green-700">Active</Badge>
-                                    )}
                                 </div>
                             </div>
 
                             <div className="flex gap-2">
                                 {socialLinks?.github && (
-                                    <Button variant="ghost" size="icon" className="hover:text-[#333]" asChild>
-                                        <a href={socialLinks.github} target="_blank" rel="noreferrer"><Github className="w-5 h-5" /></a>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:text-[#333]" asChild>
+                                        <a href={socialLinks.github} target="_blank" rel="noreferrer"><Github className="w-6 h-6" /></a>
                                     </Button>
                                 )}
                                 {socialLinks?.linkedin && (
-                                    <Button variant="ghost" size="icon" className="hover:text-[#0077b5]" asChild>
-                                        <a href={socialLinks.linkedin} target="_blank" rel="noreferrer"><Linkedin className="w-5 h-5" /></a>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:text-[#0077b5]" asChild>
+                                        <a href={socialLinks.linkedin} target="_blank" rel="noreferrer"><Linkedin className="w-6 h-6" /></a>
                                     </Button>
                                 )}
                                 {socialLinks?.twitter && (
-                                    <Button variant="ghost" size="icon" className="hover:text-[#1DA1F2]" asChild>
-                                        <a href={socialLinks.twitter} target="_blank" rel="noreferrer"><Twitter className="w-5 h-5" /></a>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 hover:text-[#1DA1F2]" asChild>
+                                        <a href={socialLinks.twitter} target="_blank" rel="noreferrer"><Twitter className="w-6 h-6" /></a>
                                     </Button>
                                 )}
                                 {socialLinks?.website && (
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" asChild>
-                                        <a href={socialLinks.website} target="_blank" rel="noreferrer"><Globe className="w-5 h-5" /></a>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground" asChild>
+                                        <a href={socialLinks.website} target="_blank" rel="noreferrer"><Globe className="w-6 h-6" /></a>
                                     </Button>
                                 )}
+                                {socialLinks?.extra?.map((link, idx) => {
+                                    const resolved = resolvePlatformFromUrl(link.url);
+                                    const Icon = resolved.Icon;
+                                    return (
+                                        <Button key={idx} variant="ghost" size="icon" className={`h-10 w-10 ${resolved.accentClass}`} asChild>
+                                            <a href={link.url} target="_blank" rel="noreferrer"><Icon className="w-6 h-6" /></a>
+                                        </Button>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -91,10 +98,6 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4" />
                                 Joined {new Date(joinDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                Remote (New York)
                             </div>
                         </div>
 

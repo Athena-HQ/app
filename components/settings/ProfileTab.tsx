@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle2, Globe, User, Award, Star, Trophy, Clock } from "lucide-react";
+import { CheckCircle2, Globe, Award, Star, Trophy, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ const profileSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   bio: z.string().max(280, "Bio must be 280 characters or less").optional(),
-  timezone: z.string(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -134,7 +133,7 @@ interface ProfileTabProps {
 }
 
 function buildInitialSocials(raw: CurrentAppUser["raw"]): SocialLink[] {
-  return [
+  const presets: SocialLink[] = [
     {
       id: "preset-github",
       platform: "GitHub",
@@ -157,6 +156,18 @@ function buildInitialSocials(raw: CurrentAppUser["raw"]): SocialLink[] {
       preset: true,
     },
   ];
+
+  const extras: SocialLink[] = (raw.profile?.social_links ?? []).map(
+    (link: { platform: string; url: string }, idx: number) => ({
+      id: `extra-${idx}`,
+      platform: link.platform,
+      value: link.url,
+      visible: true,
+      preset: false,
+    })
+  );
+
+  return [...presets, ...extras];
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -195,14 +206,20 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
         bio: values.bio,
       };
 
+      const extraLinks: { platform: string; url: string }[] = [];
+
       for (const link of socials) {
         const p = link.platform.toLowerCase();
-        // If visible is false, we clear the link by sending an empty string
         const val = link.visible ? link.value : "";
         if (p === "github") payload.github = val;
         else if (p === "linkedin") payload.linkedin = val;
         else if (p === "twitter") payload.twitter = val;
+        else if (link.value && link.visible && !link.preset) {
+          extraLinks.push({ platform: link.platform, url: link.value });
+        }
       }
+
+      payload.social_links = extraLinks;
 
       return updateMyProfile(payload);
     },
@@ -236,7 +253,6 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
       first_name: appUser.raw.first_name ?? "",
       last_name: appUser.raw.last_name ?? "",
       bio: rawProfile?.bio ?? "",
-      timezone: "America/New_York",
     },
   });
 
@@ -496,31 +512,6 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
               setSocialsDirty(true);
             }}
           />
-        </CardContent>
-      </Card>
-
-      {/* Account */}
-      <Card>
-        <CardHeader>
-          <SectionHeader
-            icon={User}
-            title="Account"
-            description="Personal preferences."
-          />
-        </CardHeader>
-        <CardContent>
-          <FieldRow label="Timezone">
-            <select
-              {...register("timezone")}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-            >
-              <option value="America/New_York">America/New_York</option>
-              <option value="America/Los_Angeles">America/Los_Angeles</option>
-              <option value="Europe/London">Europe/London</option>
-              <option value="Europe/Berlin">Europe/Berlin</option>
-              <option value="Asia/Tokyo">Asia/Tokyo</option>
-            </select>
-          </FieldRow>
         </CardContent>
       </Card>
 

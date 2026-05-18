@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { TaskTable } from "@/components/task/task_table";
 import { TaskFiltersComponent } from "@/components/task/task_filters";
 import { useTasks } from "@/hooks/useTasks";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
-import { getMySquadTasks, type TaskFilters, type TaskListResponse } from "@/services/task";
+import { getMySquadTasks, type TaskFilters, type TaskListResponse, type TaskStatus } from "@/services/task";
 import { fadeInVariants } from "@/lib/animations-settings";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
@@ -17,10 +18,18 @@ import { PlusIcon, Users } from "lucide-react";
 export default function TasksPage() {
   const { appUser } = useCurrentAppUser();
   const currentUserId = appUser?.id;
+  const searchParams = useSearchParams();
   const [view, setView] = useState<
     "assigned_to_me" | "assigned_by_me" | "all" | "needs_review" | "my_squad_tasks"
   >("all");
   const [filters, setFilters] = useState<TaskFilters>({});
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (statusParam) {
+      setFilters((prev) => ({ ...prev, status: statusParam as TaskStatus }));
+    }
+  }, [searchParams]);
 
   const taskFilters: TaskFilters = {
     ...filters,
