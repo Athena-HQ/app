@@ -19,17 +19,13 @@ export default function TasksPage() {
   const { appUser } = useCurrentAppUser();
   const currentUserId = appUser?.id;
   const searchParams = useSearchParams();
+  const statusParam = searchParams.get("status");
   const [view, setView] = useState<
     "assigned_to_me" | "assigned_by_me" | "all" | "needs_review" | "my_squad_tasks"
   >("all");
-  const [filters, setFilters] = useState<TaskFilters>({});
-
-  useEffect(() => {
-    const statusParam = searchParams.get("status");
-    if (statusParam) {
-      setFilters((prev) => ({ ...prev, status: statusParam as TaskStatus }));
-    }
-  }, [searchParams]);
+  const [filters, setFilters] = useState<TaskFilters>(() => ({
+    status: statusParam ? (statusParam as TaskStatus) : undefined,
+  }));
 
   const taskFilters: TaskFilters = {
     ...filters,

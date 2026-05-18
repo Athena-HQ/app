@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { feedbackFormSchema, type FeedbackFormValues } from "@/lib/validations/feedback";
 import { feedbackService, FEEDBACK_ATTRIBUTES, type FeedbackAttributeValue } from "@/services/feedback";
 import type { TaskResponse } from "@/services/task";
-import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { Star, Send, Loader2, Users, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -54,7 +53,6 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 export function FeedbackForm({ task, targetUser, targetSquad, onSuccess }: FeedbackFormProps) {
   const router = useRouter();
-  const { appUser } = useCurrentAppUser();
   
   const {
     register,
