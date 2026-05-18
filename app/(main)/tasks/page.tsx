@@ -27,12 +27,6 @@ export default function TasksPage() {
     status: statusParam ? (statusParam as TaskStatus) : undefined,
   }));
 
-  useEffect(() => {
-    const statusParam = searchParams.get("status");
-    if (statusParam) {
-      setFilters((prev) => ({ ...prev, status: statusParam as TaskStatus }));
-    }
-  }, [searchParams]);
 
   const taskFilters: TaskFilters = {
     ...filters,
