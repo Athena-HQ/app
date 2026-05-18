@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { AppUserResponse } from "@/services/company";
@@ -31,9 +32,10 @@ export function EmployeeCard({ employee, roleLabel, className }: EmployeeCardPro
   const avatarUrl = employee.profile?.avatar_url;
 
   return (
-    <div
+    <Link
+      href={`/employees/${employee.id}`}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/60 bg-card/80 p-5",
+        "block group relative overflow-hidden rounded-xl border border-border/60 bg-card/80 p-5 cursor-pointer",
         "backdrop-blur-[2px] shadow-[0_6px_20px_-14px_hsl(var(--foreground)/0.35)]",
         "transition-all duration-300 ease-out",
         "before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(155deg,hsl(var(--background)/0.6)_0%,hsl(var(--muted)/0.18)_45%,hsl(var(--background)/0.72)_100%)] before:opacity-80",
@@ -67,6 +69,6 @@ export function EmployeeCard({ employee, roleLabel, className }: EmployeeCardPro
         </div>
 
       </div>
-    </div>
+    </Link>
   );
 }

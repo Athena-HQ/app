@@ -14,6 +14,7 @@ export interface EmployeeProfile {
     twitter?: string;
     website?: string;
     portfolio?: string;
+    extra?: { platform: string; url: string }[];
   };
   gamification: {
     levelNumber: number;

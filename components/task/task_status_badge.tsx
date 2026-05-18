@@ -7,13 +7,13 @@ type TaskStatusBadgeProps = {
   className?: string;
 };
 
-const statusConfig: Record<TaskStatus, { label: string; variant: "default" | "secondary" | "success" | "warning" }> = {
+const statusConfig: Record<TaskStatus, { label: string; variant: "default" | "secondary" | "success" | "warning" | "danger" }> = {
   assigned: { label: "Assigned", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "default" },
   completed: { label: "Completed", variant: "success" },
   under_review: { label: "Under Review", variant: "warning" },
   reviewed: { label: "Reviewed", variant: "success" },
-  on_hold: { label: "On Hold", variant: "secondary" },
+  on_hold: { label: "On Hold", variant: "danger" },
 };
 
 export function TaskStatusBadge({ status, className }: TaskStatusBadgeProps) {

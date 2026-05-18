@@ -99,6 +99,7 @@ export function TaskStatCards({
       <TaskStatCard
         title="Done"
         count={done}
+        status="completed"
         icon={<CheckCircle2 className="h-8 w-8 text-green-600" />}
         gradient="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/30"
         delay={0.3}
@@ -106,6 +107,7 @@ export function TaskStatCards({
       <TaskStatCard
         title="On Hold"
         count={onHold}
+        status="on_hold"
         icon={<PauseCircle className="h-8 w-8 text-red-600" />}
         gradient="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30"
         delay={0.4}

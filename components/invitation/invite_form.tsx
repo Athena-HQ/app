@@ -15,7 +15,6 @@ import { FormError } from "@/components/form_error";
 import { useInvitationForm } from "@/hooks/useInvitation";
 import { INVITATION_ROLES, type InvitationRole } from "@/services/invitation";
 import type { InvitationFormValues } from "@/lib/validations/invitation";
-import { FileUpIcon } from "lucide-react";
 import { fadeInUpVariants } from "@/lib/animations-settings";
 import { cn } from "@/lib/utils";
 
@@ -114,20 +113,6 @@ export function InviteForm({ onSuccess, className }: InviteFormProps) {
             disabled={isSubmitting}
           >
             {isSubmitting ? "Sending Invite..." : "Send Invite"}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className=" px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          <Button type="button" variant="outline" className="w-full">
-            <FileUpIcon />
-            Bulk Invite (CSV)
           </Button>
         </form>
       </Card>

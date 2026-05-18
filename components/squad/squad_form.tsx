@@ -5,7 +5,6 @@ import {
   Puzzle,
   UserPlus,
   ArrowLeft,
-  Save,
   Check,
   Loader2,
   Trash2,
@@ -320,14 +319,6 @@ export function SquadForm({
           </Button>
 
           <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-accent text-accent-foreground hover:bg-accent/10"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Draft
-            </Button>
             <Button
               type="submit"
               form="squad-form"

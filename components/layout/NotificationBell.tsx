@@ -111,9 +111,9 @@ export function NotificationBell() {
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="relative"
+          className="relative rounded-full"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />

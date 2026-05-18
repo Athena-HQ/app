@@ -9,7 +9,6 @@ import { FeedbackCard } from "@/components/feedback/feedback_card";
 import type { TaskResponse } from "@/services/task";
 import { useCurrentAppUser } from "@/hooks/useCurrentAppUser";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
