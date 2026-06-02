@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AppUserResponse } from "@/services/company";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useChatDrawer } from "@/contexts/chat-drawer-context";
 import { Button } from "@/components/ui/button";
 import { RiMessage3Line } from "@remixicon/react";
 
@@ -36,12 +36,12 @@ export function CompanyMemberCard({
 }) {
   const isManager = employee.role?.toLowerCase() === "company manager";
   const { user } = useAuth();
-  const router = useRouter();
+  const { openDrawer } = useChatDrawer();
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push(`/chat?new_dm=${employee.user_id}`);
+    openDrawer(employee.user_id);
   };
 
   return (

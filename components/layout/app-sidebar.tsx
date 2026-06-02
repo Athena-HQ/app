@@ -69,11 +69,11 @@ const data = {
           url: "/tasks",
           icon: RiTaskLine,
         },
-        {
-          title: "Chat",
-          url: "/chat",
-          icon: RiChat1Line,
-        },
+        // {
+        //   title: "Chat",
+        //   url: "/chat",
+        //   icon: RiChat1Line,
+        // },
         // {
         //   title: "Insights",
         //   url: "#",
