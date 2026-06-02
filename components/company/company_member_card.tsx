@@ -52,9 +52,8 @@ export function CompanyMemberCard({
         }`}
       >
         <CardContent
-          className={`px-4 flex flex-col items-center justify-center ${
-            isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
-          }`}
+          className={`px-4 flex flex-col items-center justify-center ${isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
+            }`}
         >
           <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
             <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
