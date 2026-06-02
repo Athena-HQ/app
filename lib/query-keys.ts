@@ -24,4 +24,9 @@ export const queryKeys = {
     myXp: ["gamification", "my_xp"] as const,
     myBadges: ["gamification", "my_badges"] as const,
   },
+  reports: {
+    all: ["reports"] as const,
+    list: (filters: object) => ["reports", filters] as const,
+    detail: (id: number) => ["report", id] as const,
+  },
 };
