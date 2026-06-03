@@ -6,15 +6,15 @@ import {
   Channel,
   ChannelHeader,
   ChannelList,
-  MessageInput,
+  MessageComposer,
   MessageList,
   Thread,
   Window,
   LoadingIndicator,
   useChatContext,
 } from "stream-chat-react";
-import type { StreamChat, Event } from "stream-chat";
-import "stream-chat-react/dist/css/v2/index.css";
+import type { StreamChat, Event, OwnUserResponse } from "stream-chat";
+import "stream-chat-react/dist/css/index.css";
 import { useChatClient } from "@/hooks/useChatClient";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/auth-context";
@@ -90,7 +90,7 @@ function CustomChannelHeader({ onBack }: { onBack: () => void }) {
   );
 }
 
-function ChatContent({ client, error }: { client: StreamChat; error: string | null }) {
+function ChatContent({ client, error }: { client: StreamChat | null; error: string | null }) {
   const { user } = useAuth();
   const { resolvedTheme } = useTheme();
   const { newDmUserId, clearNewDmUserId } = useChatDrawer();
@@ -135,7 +135,7 @@ function ChatContent({ client, error }: { client: StreamChat; error: string | nu
     return (
       <div className="flex items-center justify-center h-full w-full">
         <div className="flex flex-col items-center gap-4">
-          <LoadingIndicator size={40} />
+          <LoadingIndicator />
           <p className="text-muted-foreground animate-pulse">Connecting to chat...</p>
         </div>
       </div>
@@ -144,13 +144,19 @@ function ChatContent({ client, error }: { client: StreamChat; error: string | nu
 
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden relative">
+      <style>{`
+        .str-chat__channel-list { width: 100% !important; max-width: 100% !important; }
+        .str-chat { width: 100% !important; max-width: 100% !important; }
+        .str-chat__main-panel { width: 100% !important; max-width: 100% !important; }
+        .str-chat-channel { width: 100% !important; max-width: 100% !important; }
+        .str-chat__container { width: 100% !important; max-width: 100% !important; }
+      `}</style>
       <Chat 
         client={client} 
         theme={`str-chat__theme-${resolvedTheme === "light" ? "light" : "dark"}`}
       >
         <DmHandler newDmUserId={newDmUserId} clearNewDmUserId={clearNewDmUserId} setChannelViewActive={setChannelViewActive} />
         
-        {/* We use standard CSS classes to handle showing list vs channel in the narrow drawer */}
         <div className="flex h-full w-full relative overflow-hidden">
           
           {/* Channel List View */}
@@ -165,7 +171,6 @@ function ChatContent({ client, error }: { client: StreamChat; error: string | nu
                 setActiveChannelOnMount={false}
               />
             </div>
-            {/* Overlay a click capture over the ChannelList to track when a channel is selected via internal Context */}
             <ChannelSelectInterceptor setChannelViewActive={setChannelViewActive} />
           </div>
 
@@ -175,7 +180,7 @@ function ChatContent({ client, error }: { client: StreamChat; error: string | nu
               <Window>
                 <CustomChannelHeader onBack={() => setChannelViewActive(false)} />
                 <MessageList />
-                <MessageInput />
+                <MessageComposer />
               </Window>
               <Thread />
             </Channel>
@@ -237,19 +242,22 @@ export function GlobalChatDrawer() {
   useEffect(() => {
     if (!client || !client.user) return;
 
-    // Initial count
+    const ownUser = client.user as OwnUserResponse;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUnreadCount(client.user.total_unread_count || 0);
+    setUnreadCount(ownUser.total_unread_count ?? 0);
 
     const handleEvent = (event: Event) => {
       if (event.total_unread_count !== undefined) {
         setUnreadCount(event.total_unread_count);
-      } else if (client.user?.total_unread_count !== undefined) {
-        setUnreadCount(client.user.total_unread_count);
+      } else {
+        const currentUser = client.user as OwnUserResponse | undefined;
+        if (currentUser?.total_unread_count !== undefined) {
+          setUnreadCount(currentUser.total_unread_count);
+        }
       }
     };
 
-    // Listen to all events to catch any unread count updates
     client.on(handleEvent);
 
     return () => {

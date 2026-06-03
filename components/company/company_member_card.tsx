@@ -41,7 +41,7 @@ export function CompanyMemberCard({
   const handleChatClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    openDrawer(employee.user_id);
+    openDrawer(String(employee.user_id));
   };
 
   return (
