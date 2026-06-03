@@ -1,8 +1,14 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { AppUserResponse } from "@/services/company";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
+import { useChatDrawer } from "@/contexts/chat-drawer-context";
+import { Button } from "@/components/ui/button";
+import { RiMessage3Line } from "@remixicon/react";
 
 function fullName(employee: AppUserResponse): string {
   const name = `${employee.first_name} ${employee.last_name}`.trim();
@@ -29,18 +35,25 @@ export function CompanyMemberCard({
   compact?: boolean;
 }) {
   const isManager = employee.role?.toLowerCase() === "company manager";
+  const { user } = useAuth();
+  const { openDrawer } = useChatDrawer();
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openDrawer(String(employee.user_id));
+  };
 
   return (
     <Link href={`/employees/${employee.id}`} className="block">
-      <Card 
-        className={`border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${
+      <Card
+        className={`relative border-border/70 bg-card py-2 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer ${
           isManager ? "border-primary/20 bg-primary/5" : ""
         }`}
       >
         <CardContent
-          className={`px-4 flex flex-col items-center justify-center ${
-            isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
-          }`}
+          className={`px-4 flex flex-col items-center justify-center ${isManager ? "py-6 gap-3" : compact ? "py-4 gap-2" : "py-5 gap-2.5"
+            }`}
         >
           <Avatar className={`${isManager ? "h-20 w-20" : "h-14 w-14"} border bg-background shadow-sm`}>
             <AvatarFallback className={`${isManager ? "text-2xl" : "text-lg"} font-semibold text-muted-foreground`}>
@@ -58,6 +71,17 @@ export function CompanyMemberCard({
           >
             {roleLabel(employee.role)}
           </Badge>
+          {user && user.pk !== employee.user_id && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+              onClick={handleChatClick}
+              title={`Chat with ${employee.first_name}`}
+            >
+              <RiMessage3Line size={18} />
+            </Button>
+          )}
         </CardContent>
       </Card>
     </Link>

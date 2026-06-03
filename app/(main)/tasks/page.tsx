@@ -27,6 +27,7 @@ export default function TasksPage() {
     status: statusParam ? (statusParam as TaskStatus) : undefined,
   }));
 
+
   const taskFilters: TaskFilters = {
     ...filters,
     ...(view === "assigned_to_me" && currentUserId
