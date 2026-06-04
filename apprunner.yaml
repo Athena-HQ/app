@@ -15,3 +15,5 @@ run:
       value: "production"
     - name: HOSTNAME
       value: "0.0.0.0"
+    - name: NEXT_PUBLIC_STREAM_API_KEY
+      value: "nv57gv77erdh"
