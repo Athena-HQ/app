@@ -37,7 +37,7 @@ export interface AppUserResponse {
   role: string | null;
   phone_number: string | null;
   company: number | null;
-  profile?: { id: number; bio?: string; linkedin?: string; github?: string; twitter?: string; avatar_url?: string; social_links?: { platform: string; url: string }[] };
+  profile?: { id: number; bio?: string; linkedin?: string; github?: string; twitter?: string; avatar_url?: string; social_links?: { platform: string; url: string }[]; skills?: string[] };
   task_count?: number;
   completed_task_count?: number;
   in_progress_task_count?: number;

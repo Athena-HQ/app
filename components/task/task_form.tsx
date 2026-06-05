@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,8 @@ import { DatePicker } from "@/components/ui/date_picker";
 import { FormError } from "@/components/form_error";
 import { useTaskForm } from "@/hooks/useTaskForm";
 import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
+import { useAISuggestions } from "@/hooks/useAISuggestions";
+import { AISuggestionsPanel } from "@/components/task/ai_suggestions_panel";
 import {
   TASK_PRIORITIES,
   TASK_CATEGORIES,
@@ -120,8 +122,36 @@ function FormField({
 
 export function TaskForm({ taskId }: TaskFormProps) {
   const { form, onSubmit, isSubmitting, isCurrentUserReady } = useTaskForm(taskId);
-  const { register, control, handleSubmit, formState: { errors } } = form;
+  const { register, control, handleSubmit, formState: { errors }, setValue, getValues } = form;
   const { assignableUsers, isLoading: isAssigneesLoading } = useAssignableUsers();
+
+  // Watch fields needed for AI suggestions
+  const watchedTitle = useWatch({ control, name: "title" }) ?? "";
+  const watchedDescription = useWatch({ control, name: "description" }) ?? "";
+  const watchedCategory = useWatch({ control, name: "category" }) ?? "feature";
+  const watchedPriority = useWatch({ control, name: "priority" }) ?? "medium";
+
+  const aiReady = watchedTitle.trim().length > 0 && watchedDescription.trim().length > 0;
+
+  const { suggestions, loading: aiLoading, error: aiError, trigger: triggerAI } =
+    useAISuggestions({
+      title: watchedTitle,
+      description: watchedDescription,
+      category: watchedCategory,
+      priority: watchedPriority,
+    });
+
+  // When the user clicks "Pick" on an AI suggestion, add that employee to assigneeIds
+  const handleAIPick = React.useCallback(
+    (employeeId: number) => {
+      const current: string[] = getValues("assigneeIds") ?? [];
+      const id = String(employeeId);
+      if (!current.includes(id)) {
+        setValue("assigneeIds", [...current, id], { shouldDirty: true });
+      }
+    },
+    [getValues, setValue]
+  );
   
   const { data: squads = [], isLoading: isSquadsLoading } = useQuery({
     queryKey: ["squads"],
@@ -332,6 +362,20 @@ export function TaskForm({ taskId }: TaskFormProps) {
                   </FormField>
                 );
               }}
+            />
+          </FormSection>
+
+          {/* ── AI Suggestions ─────────────────────────────────────────── */}
+          <Separator />
+
+          <FormSection icon={User} title="AI Assignee Suggestions">
+            <AISuggestionsPanel
+              suggestions={suggestions}
+              loading={aiLoading}
+              error={aiError}
+              onTrigger={triggerAI}
+              onPick={handleAIPick}
+              disabled={!aiReady}
             />
           </FormSection>
 

@@ -27,6 +27,7 @@ export interface ProfileResponse {
   twitter: string | null;
   avatar_url: string | null;
   social_links: { platform: string; url: string }[];
+  skills: string[];
 }
 
 export interface ProfileUpdateRequest {
@@ -38,6 +39,7 @@ export interface ProfileUpdateRequest {
   twitter?: string;
   avatar_url?: string;
   social_links?: { platform: string; url: string }[];
+  skills?: string[];
 }
 
 // ─── API Functions ──────────────────────────────────────────────────────────
