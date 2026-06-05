@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listFeedback, FEEDBACK_ATTRIBUTES, type FeedbackResponse } from "@/services/feedback";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Star, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-function StarDisplay({ value, size = "sm" }: { value: number; size?: "sm" | "xs" }) {
-  const iconSize = size === "xs" ? "h-3 w-3" : "h-4 w-4";
+function StarDisplay({ value, size = "sm" }: { value: number; size?: "sm" | "xs" | "md" }) {
+  const iconSize = size === "xs" ? "h-3 w-3" : size === "md" ? "h-5 w-5" : "h-4 w-4";
   return (
     <div className="flex gap-px">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -27,19 +29,29 @@ function StarDisplay({ value, size = "sm" }: { value: number; size?: "sm" | "xs"
   );
 }
 
-function FeedbackHistoryItem({ feedback }: { feedback: FeedbackResponse }) {
+function FeedbackHistoryItem({
+  feedback,
+  onClick,
+}: {
+  feedback: FeedbackResponse;
+  onClick: () => void;
+}) {
   const reviewer = feedback.reviewer_detail;
   const reviewerName = `${reviewer.first_name} ${reviewer.last_name}`.trim() || reviewer.email;
   const avgStars = (feedback.rating / 5).toFixed(1);
 
   return (
-    <div className="p-4 border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
+    <div
+      className="p-4 border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href={`/employees/${reviewer.id}`}
               className="text-sm font-semibold hover:text-primary transition-colors"
+              onClick={(e) => e.stopPropagation()}
             >
               {reviewerName}
             </Link>
@@ -53,6 +65,7 @@ function FeedbackHistoryItem({ feedback }: { feedback: FeedbackResponse }) {
             <Link
               href={`/tasks/${feedback.task}`}
               className="text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5 block truncate"
+              onClick={(e) => e.stopPropagation()}
             >
               on &quot;{feedback.task_title}&quot;
             </Link>
@@ -96,11 +109,109 @@ function FeedbackHistoryItem({ feedback }: { feedback: FeedbackResponse }) {
   );
 }
 
+function FeedbackModal({
+  feedback,
+  open,
+  onClose,
+}: {
+  feedback: FeedbackResponse | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!feedback) return null;
+
+  const reviewer = feedback.reviewer_detail;
+  const reviewerName = `${reviewer.first_name} ${reviewer.last_name}`.trim() || reviewer.email;
+  const avgStars = (feedback.rating / 5).toFixed(1);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+            Feedback from {reviewerName}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Reviewer + task */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Link
+                href={`/employees/${reviewer.id}`}
+                className="text-sm font-semibold hover:text-primary transition-colors"
+                onClick={onClose}
+              >
+                {reviewerName}
+              </Link>
+              {reviewer.role && (
+                <Badge variant="outline" className="ml-2 text-[10px] capitalize">
+                  {reviewer.role}
+                </Badge>
+              )}
+              {feedback.task_title && (
+                <Link
+                  href={`/tasks/${feedback.task}`}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5 block"
+                  onClick={onClose}
+                >
+                  on &quot;{feedback.task_title}&quot;
+                </Link>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+              <span className="text-xl font-bold">{avgStars}</span>
+              <span className="text-xs text-muted-foreground">/ 5</span>
+            </div>
+          </div>
+
+          {/* Attribute breakdown */}
+          <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/30">
+            {FEEDBACK_ATTRIBUTES.map((attr) => (
+              <div key={attr.key} className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground capitalize">
+                  {attr.label}
+                </span>
+                <div className="flex items-center gap-2">
+                  <StarDisplay value={feedback[attr.key] as number} size="sm" />
+                  <span className="text-xs text-muted-foreground">
+                    {feedback[attr.key]}/5
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Comment */}
+          {feedback.comment && (
+            <div className="flex gap-2 p-3 rounded-lg bg-muted/20 border border-border/40">
+              <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground/80 leading-relaxed">{feedback.comment}</p>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground text-right">
+            {new Date(feedback.created_at).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface FeedbackHistoryCardProps {
   employeeId: number;
 }
 
 export function FeedbackHistoryCard({ employeeId }: FeedbackHistoryCardProps) {
+  const [selected, setSelected] = useState<FeedbackResponse | null>(null);
+
   const { data: feedbacks = [], isLoading } = useQuery({
     queryKey: ["feedbacks", employeeId],
     queryFn: () => listFeedback(employeeId),
@@ -113,44 +224,56 @@ export function FeedbackHistoryCard({ employeeId }: FeedbackHistoryCardProps) {
       : null;
 
   return (
-    <Card className="border-none shadow-card bg-card/60 backdrop-blur-sm h-full">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-amber-400" />
-            <h3 className="text-base font-semibold">Feedback</h3>
+    <>
+      <Card className="border-none shadow-card bg-card/60 backdrop-blur-sm h-full">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-amber-400" />
+              <h3 className="text-base font-semibold">Feedback</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              {avgRating && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span className="text-sm font-bold">{avgRating}</span>
+                </div>
+              )}
+              <Badge variant="secondary" className="text-[10px]">
+                {feedbacks.length} review{feedbacks.length !== 1 ? "s" : ""}
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {avgRating && (
-              <div className="flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-sm font-bold">{avgRating}</span>
-              </div>
-            )}
-            <Badge variant="secondary" className="text-[10px]">
-              {feedbacks.length} review{feedbacks.length !== 1 ? "s" : ""}
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground animate-pulse">
-            Loading feedback…
-          </div>
-        ) : feedbacks.length === 0 ? (
-          <div className="px-4 py-8 text-center">
-            <Star className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No feedback received yet.</p>
-          </div>
-        ) : (
-          <div className="max-h-[400px] overflow-y-auto">
-            {feedbacks.map((feedback) => (
-              <FeedbackHistoryItem key={feedback.id} feedback={feedback} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground animate-pulse">
+              Loading feedback…
+            </div>
+          ) : feedbacks.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <Star className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No feedback received yet.</p>
+            </div>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto">
+              {feedbacks.map((feedback) => (
+                <FeedbackHistoryItem
+                  key={feedback.id}
+                  feedback={feedback}
+                  onClick={() => setSelected(feedback)}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <FeedbackModal
+        feedback={selected}
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+      />
+    </>
   );
 }

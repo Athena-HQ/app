@@ -24,7 +24,7 @@ export function StatsOverview({ employee }: StatsOverviewProps) {
             icon: Trophy,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
-            subtext: "Top 10% in Squad"
+            subtext: gamification.badges.length > 0 ? "Keep it up!" : "Complete tasks to earn badges"
         },
         {
             label: "Avg. Rating",
