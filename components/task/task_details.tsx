@@ -401,7 +401,15 @@ export function TaskDetails({ task }: TaskDetailsProps) {
                       )}
                     </div>
                     {canCreateSubtask && (
-                      <SubtaskForm parentTaskId={task.id} squads={task.squads || []} />
+                      <SubtaskForm
+                        parentTaskId={task.id}
+                        squads={task.squads || []}
+                        parentAssigneeNames={
+                          (task.assignees ?? []).map((a) =>
+                            `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim()
+                          ).filter(Boolean)
+                        }
+                      />
                     )}
                   </div>
 

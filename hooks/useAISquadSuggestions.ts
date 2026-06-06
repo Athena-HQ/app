@@ -3,43 +3,42 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api/api-util";
 
-export interface AISuggestion {
-  employee_id: number;
+export interface AISquadSuggestion {
+  squad_id: number;
   name: string;
-  role: string;
-  xp_level: string;
-  total_xp: number;
+  stack: string;
+  description: string;
+  member_count: number;
+  aggregated_skills: string[];
+  total_open_tasks: number;
   avg_feedback_rating: number | null;
-  open_task_count: number;
-  skills: string[];
   reason: string;
   confidence: "high" | "medium" | "low";
-  is_busy: boolean;
+  is_overloaded: boolean;
 }
 
-export interface UseAISuggestionsInput {
+export interface UseAISquadSuggestionsInput {
   title: string;
   description: string;
   category: string;
   priority: string;
-  parentAssigneeNames?: string[];
+  excludeSquadIds?: string[];
 }
 
-export interface UseAISuggestionsResult {
-  suggestions: AISuggestion[];
+export interface UseAISquadSuggestionsResult {
+  suggestions: AISquadSuggestion[];
   loading: boolean;
   error: string | null;
   trigger: () => void;
 }
 
-export function useAISuggestions(
-  input: UseAISuggestionsInput,
-): UseAISuggestionsResult {
-  const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
+export function useAISquadSuggestions(
+  input: UseAISquadSuggestionsInput,
+): UseAISquadSuggestionsResult {
+  const [suggestions, setSuggestions] = useState<AISquadSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Counter-based trigger — incrementing forces the effect to re-run
   const tick = useRef(0);
   const [, forceRun] = useState(0);
 
@@ -49,24 +48,22 @@ export function useAISuggestions(
   }, []);
 
   useEffect(() => {
-    if (tick.current === 0) return; // Don't auto-fire on mount
+    if (tick.current === 0) return;
 
     const controller = new AbortController();
     setLoading(true);
     setError(null);
     setSuggestions([]);
 
-    const body: Record<string, unknown> = {
+    const body = {
       title: input.title,
       description: input.description,
       category: input.category,
       priority: input.priority,
+      exclude_squad_ids: (input.excludeSquadIds ?? []).map(Number),
     };
-    if (input.parentAssigneeNames && input.parentAssigneeNames.length > 0) {
-      body.parent_assignee_names = input.parentAssigneeNames;
-    }
 
-    api.post<{ suggestions: AISuggestion[] }>("api/ai/suggest-assignees/", body, {
+    api.post<{ suggestions: AISquadSuggestion[] }>("api/ai/suggest-squads/", body, {
       signal: controller.signal,
     })
       .then((data) => {

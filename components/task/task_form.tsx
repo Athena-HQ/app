@@ -31,7 +31,9 @@ import { FormError } from "@/components/form_error";
 import { useTaskForm } from "@/hooks/useTaskForm";
 import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 import { useAISuggestions } from "@/hooks/useAISuggestions";
+import { useAISquadSuggestions } from "@/hooks/useAISquadSuggestions";
 import { AISuggestionsPanel } from "@/components/task/ai_suggestions_panel";
+import { AISquadSuggestionsPanel } from "@/components/task/ai_squad_panel";
 import {
   TASK_PRIORITIES,
   TASK_CATEGORIES,
@@ -69,6 +71,8 @@ const categoryLabels: Record<string, string> = {
   testing: "Testing",
   other: "Other",
 };
+
+type AssignMode = "engineers" | "squads";
 
 type TaskFormProps = {
   taskId?: string;
@@ -120,20 +124,66 @@ function FormField({
   );
 }
 
+// ─── Mode Switch ──────────────────────────────────────────────────────────────
+
+function ModeSwitch({
+  mode,
+  onChange,
+}: {
+  mode: AssignMode;
+  onChange: (m: AssignMode) => void;
+}) {
+  return (
+    <div className="flex items-center rounded-lg border border-border bg-muted/30 p-1 w-fit">
+      <button
+        type="button"
+        onClick={() => onChange("engineers")}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-1.5 ${
+          mode === "engineers"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <User className="h-3.5 w-3.5" />
+        Engineers
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("squads")}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-1.5 ${
+          mode === "squads"
+            ? "bg-background text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+      >
+        <Users className="h-3.5 w-3.5" />
+        Squads
+      </button>
+    </div>
+  );
+}
+
+// ─── TaskForm ─────────────────────────────────────────────────────────────────
+
 export function TaskForm({ taskId }: TaskFormProps) {
   const { form, onSubmit, isSubmitting, isCurrentUserReady } = useTaskForm(taskId);
   const { register, control, handleSubmit, formState: { errors }, setValue, getValues } = form;
   const { assignableUsers, isLoading: isAssigneesLoading } = useAssignableUsers();
+
+  // Assignment mode toggle
+  const [assignMode, setAssignMode] = React.useState<AssignMode>("engineers");
 
   // Watch fields needed for AI suggestions
   const watchedTitle = useWatch({ control, name: "title" }) ?? "";
   const watchedDescription = useWatch({ control, name: "description" }) ?? "";
   const watchedCategory = useWatch({ control, name: "category" }) ?? "feature";
   const watchedPriority = useWatch({ control, name: "priority" }) ?? "medium";
+  const watchedSquadIds = useWatch({ control, name: "squadIds" }) ?? [];
 
   const aiReady = watchedTitle.trim().length > 0 && watchedDescription.trim().length > 0;
 
-  const { suggestions, loading: aiLoading, error: aiError, trigger: triggerAI } =
+  // Engineer AI suggestions
+  const { suggestions: engineerSuggestions, loading: aiEngLoading, error: aiEngError, trigger: triggerEngAI } =
     useAISuggestions({
       title: watchedTitle,
       description: watchedDescription,
@@ -141,8 +191,18 @@ export function TaskForm({ taskId }: TaskFormProps) {
       priority: watchedPriority,
     });
 
-  // When the user clicks "Pick" on an AI suggestion, add that employee to assigneeIds
-  const handleAIPick = React.useCallback(
+  // Squad AI suggestions
+  const { suggestions: squadSuggestions, loading: aiSqLoading, error: aiSqError, trigger: triggerSqAI } =
+    useAISquadSuggestions({
+      title: watchedTitle,
+      description: watchedDescription,
+      category: watchedCategory,
+      priority: watchedPriority,
+      excludeSquadIds: watchedSquadIds,
+    });
+
+  // Pick handlers
+  const handleEngineerPick = React.useCallback(
     (employeeId: number) => {
       const current: string[] = getValues("assigneeIds") ?? [];
       const id = String(employeeId);
@@ -150,9 +210,20 @@ export function TaskForm({ taskId }: TaskFormProps) {
         setValue("assigneeIds", [...current, id], { shouldDirty: true });
       }
     },
-    [getValues, setValue]
+    [getValues, setValue],
   );
-  
+
+  const handleSquadPick = React.useCallback(
+    (squadId: number) => {
+      const current: string[] = getValues("squadIds") ?? [];
+      const id = String(squadId);
+      if (!current.includes(id)) {
+        setValue("squadIds", [...current, id], { shouldDirty: true });
+      }
+    },
+    [getValues, setValue],
+  );
+
   const { data: squads = [], isLoading: isSquadsLoading } = useQuery({
     queryKey: ["squads"],
     queryFn: listSquads,
@@ -205,178 +276,197 @@ export function TaskForm({ taskId }: TaskFormProps) {
 
           <Separator />
 
+          {/* ── Assignment ─────────────────────────────────────────────── */}
           <FormSection icon={User} title="Assignment *">
-            <Controller
-              name="assigneeIds"
-              control={control}
-              render={({ field }) => {
-                const selected = field.value;
-                const selectedNames = assigneeOptions
-                  .filter((u) => selected.includes(u.id))
-                  .map((u) => u.name);
-                return (
-                  <FormField
-                    icon={User}
-                    label="Individuals (Multiple)"
-                    error={errors.assigneeIds?.message as string}
-                  >
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between font-normal h-auto min-h-10 py-2"
-                          disabled={!isCurrentUserReady || isAssigneesLoading}
-                        >
-                          <span className="flex flex-wrap gap-1 text-left">
-                            {selectedNames.length === 0 ? (
-                              <span className="text-muted-foreground">
-                                {isAssigneesLoading ? "Loading..." : "Select individuals…"}
+            <ModeSwitch mode={assignMode} onChange={setAssignMode} />
+
+            {/* Engineers mode */}
+            {assignMode === "engineers" && (
+              <>
+                <Controller
+                  name="assigneeIds"
+                  control={control}
+                  render={({ field }) => {
+                    const selected = field.value;
+                    const selectedNames = assigneeOptions
+                      .filter((u) => selected.includes(u.id))
+                      .map((u) => u.name);
+                    return (
+                      <FormField
+                        icon={User}
+                        label="Individuals (Multiple)"
+                        error={errors.assigneeIds?.message as string}
+                      >
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="w-full justify-between font-normal h-auto min-h-10 py-2"
+                              disabled={!isCurrentUserReady || isAssigneesLoading}
+                            >
+                              <span className="flex flex-wrap gap-1 text-left">
+                                {selectedNames.length === 0 ? (
+                                  <span className="text-muted-foreground">
+                                    {isAssigneesLoading ? "Loading..." : "Select individuals…"}
+                                  </span>
+                                ) : (
+                                  selectedNames.map((name) => (
+                                    <span
+                                      key={name}
+                                      className="bg-sky-500/15 text-sky-400 border border-sky-500/30 rounded-full px-2 py-0.5 text-xs"
+                                    >
+                                      {name}
+                                    </span>
+                                  ))
+                                )}
                               </span>
-                            ) : (
-                              selectedNames.map((name) => (
-                                <span
-                                  key={name}
-                                  className="bg-sky-500/15 text-sky-400 border border-sky-500/30 rounded-full px-2 py-0.5 text-xs"
-                                >
-                                  {name}
-                                </span>
-                              ))
-                            )}
-                          </span>
-                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search individuals…" />
-                          <CommandList>
-                            <CommandEmpty>No users found.</CommandEmpty>
-                            <CommandGroup>
-                              {assigneeOptions.map((user) => {
-                                const isSelected = selected.includes(user.id);
-                                return (
-                                  <CommandItem
-                                    key={user.id}
-                                    value={user.name}
-                                    onSelect={() => {
-                                      const next = isSelected
-                                        ? selected.filter((id) => id !== user.id)
-                                        : [...selected, user.id];
-                                      field.onChange(next);
-                                    }}
-                                  >
-                                    <Check
-                                      className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
-                                    />
-                                    {user.name}
-                                  </CommandItem>
-                                );
-                              })}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <p className="text-xs text-muted-foreground">Select one or more individuals to assign this task to.</p>
-                  </FormField>
-                );
-              }}
-            />
+                              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search individuals…" />
+                              <CommandList>
+                                <CommandEmpty>No users found.</CommandEmpty>
+                                <CommandGroup>
+                                  {assigneeOptions.map((user) => {
+                                    const isSelected = selected.includes(user.id);
+                                    return (
+                                      <CommandItem
+                                        key={user.id}
+                                        value={user.name}
+                                        onSelect={() => {
+                                          const next = isSelected
+                                            ? selected.filter((id: string) => id !== user.id)
+                                            : [...selected, user.id];
+                                          field.onChange(next);
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
+                                        />
+                                        {user.name}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <p className="text-xs text-muted-foreground">Select one or more individuals to assign this task to.</p>
+                      </FormField>
+                    );
+                  }}
+                />
 
-            <Controller
-              name="squadIds"
-              control={control}
-              render={({ field }) => {
-                const selected = field.value;
-                const selectedNames = squads
-                  .filter((s) => selected.includes(String(s.id)))
-                  .map((s) => s.name);
-                return (
-                  <FormField
-                    icon={Users}
-                    label="Squads (Multiple)"
-                    error={errors.squadIds?.message as string}
-                  >
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between font-normal h-auto min-h-10 py-2"
-                          disabled={isSquadsLoading}
-                        >
-                          <span className="flex flex-wrap gap-1 text-left">
-                            {selectedNames.length === 0 ? (
-                              <span className="text-muted-foreground">
-                                {isSquadsLoading ? "Loading..." : "Select squads…"}
+                {/* AI Engineer Suggestions */}
+                <AISuggestionsPanel
+                  suggestions={engineerSuggestions}
+                  loading={aiEngLoading}
+                  error={aiEngError}
+                  onTrigger={triggerEngAI}
+                  onPick={handleEngineerPick}
+                  disabled={!aiReady}
+                />
+              </>
+            )}
+
+            {/* Squads mode */}
+            {assignMode === "squads" && (
+              <>
+                <Controller
+                  name="squadIds"
+                  control={control}
+                  render={({ field }) => {
+                    const selected = field.value;
+                    const selectedNames = squads
+                      .filter((s) => selected.includes(String(s.id)))
+                      .map((s) => s.name);
+                    return (
+                      <FormField
+                        icon={Users}
+                        label="Squads (Multiple)"
+                        error={errors.squadIds?.message as string}
+                      >
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="w-full justify-between font-normal h-auto min-h-10 py-2"
+                              disabled={isSquadsLoading}
+                            >
+                              <span className="flex flex-wrap gap-1 text-left">
+                                {selectedNames.length === 0 ? (
+                                  <span className="text-muted-foreground">
+                                    {isSquadsLoading ? "Loading..." : "Select squads…"}
+                                  </span>
+                                ) : (
+                                  selectedNames.map((name) => (
+                                    <span
+                                      key={name}
+                                      className="bg-purple-500/15 text-purple-400 border border-purple-500/30 rounded-full px-2 py-0.5 text-xs"
+                                    >
+                                      {name}
+                                    </span>
+                                  ))
+                                )}
                               </span>
-                            ) : (
-                              selectedNames.map((name) => (
-                                <span
-                                  key={name}
-                                  className="bg-purple-500/15 text-purple-400 border border-purple-500/30 rounded-full px-2 py-0.5 text-xs"
-                                >
-                                  {name}
-                                </span>
-                              ))
-                            )}
-                          </span>
-                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search squads…" />
-                          <CommandList>
-                            <CommandEmpty>No squads found.</CommandEmpty>
-                            <CommandGroup>
-                              {squads.map((squad) => {
-                                const isSelected = selected.includes(String(squad.id));
-                                return (
-                                  <CommandItem
-                                    key={squad.id}
-                                    value={squad.name}
-                                    onSelect={() => {
-                                      const next = isSelected
-                                        ? selected.filter((id) => id !== String(squad.id))
-                                        : [...selected, String(squad.id)];
-                                      field.onChange(next);
-                                    }}
-                                  >
-                                    <Check
-                                      className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
-                                    />
-                                    {squad.name}
-                                  </CommandItem>
-                                );
-                              })}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <p className="text-xs text-muted-foreground">Select one or more squads to assign this task to.</p>
-                  </FormField>
-                );
-              }}
-            />
-          </FormSection>
+                              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search squads…" />
+                              <CommandList>
+                                <CommandEmpty>No squads found.</CommandEmpty>
+                                <CommandGroup>
+                                  {squads.map((squad) => {
+                                    const isSelected = selected.includes(String(squad.id));
+                                    return (
+                                      <CommandItem
+                                        key={squad.id}
+                                        value={squad.name}
+                                        onSelect={() => {
+                                          const next = isSelected
+                                            ? selected.filter((id: string) => id !== String(squad.id))
+                                            : [...selected, String(squad.id)];
+                                          field.onChange(next);
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
+                                        />
+                                        {squad.name}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <p className="text-xs text-muted-foreground">Select one or more squads to assign this task to.</p>
+                      </FormField>
+                    );
+                  }}
+                />
 
-          {/* ── AI Suggestions ─────────────────────────────────────────── */}
-          <Separator />
-
-          <FormSection icon={User} title="AI Assignee Suggestions">
-            <AISuggestionsPanel
-              suggestions={suggestions}
-              loading={aiLoading}
-              error={aiError}
-              onTrigger={triggerAI}
-              onPick={handleAIPick}
-              disabled={!aiReady}
-            />
+                {/* AI Squad Suggestions */}
+                <AISquadSuggestionsPanel
+                  suggestions={squadSuggestions}
+                  loading={aiSqLoading}
+                  error={aiSqError}
+                  onTrigger={triggerSqAI}
+                  onPick={handleSquadPick}
+                  disabled={!aiReady}
+                />
+              </>
+            )}
           </FormSection>
 
           <Separator />

@@ -48,6 +48,8 @@ import {
 import { DatePicker } from "@/components/ui/date_picker";
 import { useAssignableUsers } from "@/hooks/useCurrentAppUser";
 import { queryKeys } from "@/lib/query-keys";
+import { useAISuggestions } from "@/hooks/useAISuggestions";
+import { AISuggestionsPanel } from "@/components/task/ai_suggestions_panel";
 import { Plus, Check, ChevronsUpDown } from "lucide-react";
 
 const priorityLabels: Record<string, string> = {
@@ -70,9 +72,10 @@ const categoryLabels: Record<string, string> = {
 type SubtaskFormProps = {
   parentTaskId: number;
   squads?: { id: number; name: string }[];
+  parentAssigneeNames?: string[];
 };
 
-export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
+export function SubtaskForm({ parentTaskId, parentAssigneeNames }: SubtaskFormProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -87,6 +90,22 @@ export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
     id: String(user.id),
     name: user.isCurrentUser ? `${user.name} (Me)` : `${user.name}${user.role ? ` (${user.role})` : ""}`,
   }));
+
+  const aiReady = title.trim().length > 0;
+  const { suggestions, loading: aiLoading, error: aiError, trigger: triggerAI } = useAISuggestions({
+    title,
+    description,
+    category,
+    priority,
+    parentAssigneeNames,
+  });
+
+  const handleEngineerPick = (employeeId: number) => {
+    const id = String(employeeId);
+    if (!selectedAssigneeIds.includes(id)) {
+      setSelectedAssigneeIds((prev) => [...prev, id]);
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: (data: CreateSubtaskRequest) =>
@@ -290,6 +309,14 @@ export function SubtaskForm({ parentTaskId }: SubtaskFormProps) {
                 </Command>
               </PopoverContent>
             </Popover>
+            <AISuggestionsPanel
+              suggestions={suggestions}
+              loading={aiLoading}
+              error={aiError}
+              onTrigger={triggerAI}
+              onPick={handleEngineerPick}
+              disabled={!aiReady}
+            />
           </div>
 
           {/* Due Date */}

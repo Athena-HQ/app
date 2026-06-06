@@ -3,7 +3,6 @@ import {
   Users,
   Crown,
   Puzzle,
-  UserPlus,
   ArrowLeft,
   Check,
   Loader2,
@@ -256,6 +255,8 @@ export function SquadForm({
                             roles={values.roles}
                             members={field.value}
                             onChange={field.onChange}
+                            techStack={values.techStack}
+                            squadDescription={values.squadDescription}
                           />
                         )}
                       />
@@ -264,38 +265,7 @@ export function SquadForm({
                 </Card>
               </section>
 
-              <section className="space-y-4 opacity-60 hover:opacity-100 transition-opacity">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg ">
-                    <UserPlus className="w-5 h-5 text-primary" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-foreground">
-                    Assign Members (Optional)
-                  </h2>
-                </div>
 
-                <Card className="border-none shadow-card border-dashed border-2 border-border bg-card/40 backdrop-blur-sm">
-                  <CardContent className="pt-6 flex flex-col items-center justify-center py-12 text-center">
-                    <div className="bg-muted/50 p-4 rounded-full mb-4">
-                      <Users className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-medium">
-                      Auto-Assignment Available
-                    </h3>
-                    <p className="text-foreground/70 max-w-md mt-2 mb-6">
-                      You can assign specific members later, or let our AI
-                      suggest the best team based on your requirements.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-accent text-accent-foreground hover:bg-accent/10"
-                    >
-                      Enable AI Auto-Assign
-                    </Button>
-                  </CardContent>
-                </Card>
-              </section>
             </form>
           </div>
 
