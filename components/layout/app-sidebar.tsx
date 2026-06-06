@@ -31,6 +31,7 @@ import {
   RiMoonLine,
   RiSettings3Line,
   RiNotification3Line,
+  RiFileChartLine,
 } from "@remixicon/react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
@@ -68,6 +69,11 @@ const data = {
           title: "Tasks",
           url: "/tasks",
           icon: RiTaskLine,
+        },
+        {
+          title: "Reports",
+          url: "/reports",
+          icon: RiFileChartLine,
         },
         // {
         //   title: "Chat",
