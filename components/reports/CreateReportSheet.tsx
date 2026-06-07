@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,52 +86,54 @@ export function CreateReportSheet() {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="w-4 h-4 mr-1.5" />
           New Report
         </Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle>Create Performance Report</SheetTitle>
-        </SheetHeader>
+      </DialogTrigger>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Employee */}
-          <div className="space-y-1.5">
-            <Label>Employee <span className="text-destructive">*</span></Label>
-            <Select
-              value={form.employee ? String(form.employee) : ""}
-              onValueChange={(v) => set("employee", Number(v))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select employee…" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees.map((emp) => (
-                  <SelectItem key={emp.id} value={String(emp.id)}>
-                    {emp.first_name} {emp.last_name}
-                    {emp.role ? ` · ${emp.role}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <DialogContent className="max-w-3xl w-full max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Performance Report</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+          {/* Row 1: Employee + Title */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Employee <span className="text-destructive">*</span></Label>
+              <Select
+                value={form.employee ? String(form.employee) : ""}
+                onValueChange={(v) => set("employee", Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employee…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={String(emp.id)}>
+                      {emp.first_name} {emp.last_name}
+                      {emp.role ? ` · ${emp.role}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Report Title <span className="text-destructive">*</span></Label>
+              <Input
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="e.g. Q1 2026 Performance Review"
+              />
+            </div>
           </div>
 
-          {/* Title */}
-          <div className="space-y-1.5">
-            <Label>Report Title <span className="text-destructive">*</span></Label>
-            <Input
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="e.g. Q1 2026 Performance Review"
-            />
-          </div>
-
-          {/* Period */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 2: Period type + start + end */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label>Period Type</Label>
               <Select
@@ -147,9 +149,6 @@ export function CreateReportSheet() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Period Start <span className="text-destructive">*</span></Label>
               <Input
@@ -168,18 +167,20 @@ export function CreateReportSheet() {
             </div>
           </div>
 
-          {/* Ratings */}
+          {/* Ratings — 4-col grid */}
           <div className="space-y-3">
-            <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Performance Ratings (1–5)
             </Label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {REPORT_RATING_FIELDS.map((f) => (
                 <div key={f.key} className="space-y-1.5">
                   <Label className="text-xs">{f.label}</Label>
                   <Select
                     value={String(form[f.key])}
-                    onValueChange={(v) => set(f.key, Number(v) as CreateReportRequest[typeof f.key])}
+                    onValueChange={(v) =>
+                      set(f.key, Number(v) as CreateReportRequest[typeof f.key])
+                    }
                   >
                     <SelectTrigger className="h-8">
                       <SelectValue />
@@ -212,35 +213,56 @@ export function CreateReportSheet() {
             </div>
           </div>
 
-          {/* Narrative sections */}
-          {[
-            { key: "key_achievements" as const, label: "Key Achievements" },
-            { key: "strengths" as const, label: "Strengths" },
-            { key: "areas_for_improvement" as const, label: "Areas for Improvement" },
-            { key: "goals_next_period" as const, label: "Goals for Next Period" },
-            { key: "additional_notes" as const, label: "Additional Notes" },
-          ].map((s) => (
-            <div key={s.key} className="space-y-1.5">
-              <Label className="text-xs">{s.label}</Label>
+          {/* Narrative sections — 2-col grid */}
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Narrative (optional)
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { key: "key_achievements" as const, label: "Key Achievements" },
+                { key: "strengths" as const, label: "Strengths" },
+                { key: "areas_for_improvement" as const, label: "Areas for Improvement" },
+                { key: "goals_next_period" as const, label: "Goals for Next Period" },
+              ].map((s) => (
+                <div key={s.key} className="space-y-1.5">
+                  <Label className="text-xs">{s.label}</Label>
+                  <Textarea
+                    value={(form[s.key] as string) ?? ""}
+                    onChange={(e) => set(s.key, e.target.value)}
+                    rows={3}
+                    className="resize-none text-sm"
+                    placeholder="Optional…"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Additional Notes</Label>
               <Textarea
-                value={(form[s.key] as string) ?? ""}
-                onChange={(e) => set(s.key, e.target.value)}
-                rows={3}
+                value={form.additional_notes ?? ""}
+                onChange={(e) => set("additional_notes", e.target.value)}
+                rows={2}
                 className="resize-none text-sm"
-                placeholder={`Optional…`}
+                placeholder="Optional…"
               />
             </div>
-          ))}
+          </div>
 
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating…</>
-            ) : (
-              "Create Report"
-            )}
-          </Button>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating…</>
+              ) : (
+                "Create Report"
+              )}
+            </Button>
+          </div>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
