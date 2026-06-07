@@ -1,13 +1,103 @@
+import { useState } from "react";
 import { UserSelect } from "./user_select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-react";
+import { useAISquadMemberSuggestions } from "@/hooks/useAISquadMemberSuggestions";
+import { AISquadMemberSuggestionsPanel } from "./ai_squad_member_panel";
 
 interface MemberAllocatorProps {
   roles?: Record<string, number>;
   members?: { app_user_id: number; role_in_squad: string }[];
   onChange: (members: { app_user_id: number; role_in_squad: string }[]) => void;
+  techStack?: string[];
+  squadDescription?: string;
 }
 
-export function MemberAllocator({ roles = {}, members = [], onChange }: MemberAllocatorProps) {
+function MemberSlot({
+  roleName,
+  slotIndex,
+  value,
+  onChange,
+  members,
+  techStack,
+  squadDescription,
+}: {
+  roleName: string;
+  slotIndex: number;
+  value: string;
+  onChange: (val: string) => void;
+  members: { app_user_id: number; role_in_squad: string }[];
+  techStack: string[];
+  squadDescription: string;
+}) {
+  const [showAI, setShowAI] = useState(false);
+
+  const { suggestions, loading, error, trigger } = useAISquadMemberSuggestions({
+    roleName,
+    stack: techStack.join(", "),
+    description: squadDescription,
+    excludeEmployeeIds: members.map((m) => m.app_user_id.toString()),
+  });
+
+  const handleTriggerAI = () => {
+    setShowAI(true);
+    trigger();
+  };
+
+  const handlePick = (employeeId: number) => {
+    onChange(employeeId.toString());
+    setShowAI(false);
+  };
+
+  const isConfigured = !!techStack || !!squadDescription;
+
+  return (
+    <div className="flex flex-col gap-3 p-4 border rounded-xl bg-background/50">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Slot {slotIndex + 1}
+        </span>
+        {!showAI && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleTriggerAI}
+            className="h-7 text-xs gap-1.5 text-violet-500 hover:text-violet-600 hover:bg-violet-500/10"
+            disabled={!isConfigured}
+          >
+            <Sparkles className="w-3 h-3" />
+            Suggest Member
+          </Button>
+        )}
+      </div>
+
+      <UserSelect value={value} onChange={onChange} />
+
+      {showAI && (
+        <div className="mt-2 pt-4 border-t">
+          <AISquadMemberSuggestionsPanel
+            suggestions={suggestions}
+            loading={loading}
+            error={error}
+            onTrigger={trigger}
+            onPick={handlePick}
+            disabled={!isConfigured}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function MemberAllocator({
+  roles = {},
+  members = [],
+  onChange,
+  techStack = [],
+  squadDescription = "",
+}: MemberAllocatorProps) {
   const roleEntries = Object.entries(roles).filter(([, count]) => count > 0);
 
   if (roleEntries.length === 0) {
@@ -57,15 +147,16 @@ export function MemberAllocator({ roles = {}, members = [], onChange }: MemberAl
           </Label>
           <div className="flex flex-col gap-4">
             {Array.from({ length: count }).map((_, i) => (
-              <div key={`${role}-${i}`} className="flex flex-col gap-1.5">
-                <span className="text-xs text-muted-foreground px-1">
-                  Slot {i + 1}
-                </span>
-                <UserSelect
-                  value={getUserIdForSlot(role, i)}
-                  onChange={(val) => handleSelect(role, i, val)}
-                />
-              </div>
+              <MemberSlot
+                key={`${role}-${i}`}
+                roleName={role}
+                slotIndex={i}
+                value={getUserIdForSlot(role, i)}
+                onChange={(val) => handleSelect(role, i, val)}
+                members={members}
+                techStack={techStack}
+                squadDescription={squadDescription}
+              />
             ))}
           </div>
         </div>
@@ -73,3 +164,4 @@ export function MemberAllocator({ roles = {}, members = [], onChange }: MemberAl
     </div>
   );
 }
+

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle2, Globe, Award, Star, Trophy, Clock } from "lucide-react";
+import { CheckCircle2, Globe, Award, Star, Trophy, Clock, Code, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -180,6 +180,29 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
   );
   const [socialsDirty, setSocialsDirty] = useState(false);
 
+  // ── Skills state ─────────────────────────────────────────────────────────
+  const initialSkills: string[] = Array.isArray(rawProfile?.skills)
+    ? (rawProfile.skills as string[])
+    : [];
+  const [skills, setSkills] = useState<string[]>(initialSkills);
+  const [skillsDirty, setSkillsDirty] = useState(false);
+  const [skillInput, setSkillInput] = useState("");
+  const skillInputRef = useRef<HTMLInputElement>(null);
+
+  const addSkill = (raw: string) => {
+    const trimmed = raw.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills((prev) => [...prev, trimmed]);
+      setSkillsDirty(true);
+    }
+    setSkillInput("");
+  };
+
+  const removeSkill = (skill: string) => {
+    setSkills((prev) => prev.filter((s) => s !== skill));
+    setSkillsDirty(true);
+  };
+
   const { data: xpData } = useQuery({
     queryKey: ["myXp"],
     queryFn: getMyXp,
@@ -204,6 +227,7 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
         first_name: values.first_name,
         last_name: values.last_name,
         bio: values.bio,
+        skills,
       };
 
       const extraLinks: { platform: string; url: string }[] = [];
@@ -257,7 +281,7 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
   });
 
   const bioValue = watch("bio") ?? "";
-  const combinedDirty = isDirty || socialsDirty;
+  const combinedDirty = isDirty || socialsDirty || skillsDirty;
 
   const onSubmit = async (values: ProfileFormValues) => {
     try {
@@ -265,6 +289,7 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
       toast.success("Profile saved");
       reset(values);
       setSocialsDirty(false);
+      setSkillsDirty(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save profile. Make sure URLs are valid.");
     }
@@ -274,6 +299,8 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
     reset();
     setSocials(buildInitialSocials(appUser.raw));
     setSocialsDirty(false);
+    setSkills(initialSkills);
+    setSkillsDirty(false);
   };
 
   const stats = [
@@ -487,6 +514,80 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Skills */}
+      <Card>
+        <CardHeader>
+          <SectionHeader
+            icon={Code}
+            title="Skills"
+            description="Add your technical and soft skills. These help the AI suggest you for the right tasks."
+            actions={
+              <Badge variant="secondary" className="text-[11px]">
+                {skills.length} added
+              </Badge>
+            }
+          />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {/* Tag pills */}
+          <div className="flex flex-wrap gap-2 min-h-[36px]">
+            {skills.map((sk) => (
+              <span
+                key={sk}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30 text-xs font-medium"
+              >
+                {sk}
+                <button
+                  type="button"
+                  aria-label={`Remove ${sk}`}
+                  onClick={() => removeSkill(sk)}
+                  className="text-violet-400 hover:text-violet-200 transition-colors"
+                >
+                  <XIcon size={12} />
+                </button>
+              </span>
+            ))}
+            {skills.length === 0 && (
+              <p className="text-xs text-muted-foreground">No skills added yet.</p>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="flex gap-2">
+            <input
+              ref={skillInputRef}
+              id="skill-input"
+              type="text"
+              placeholder="Type a skill and press Enter…"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  addSkill(skillInput);
+                }
+              }}
+              maxLength={80}
+              className="placeholder:text-muted-foreground border-input flex-1 min-w-0 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs outline-none"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addSkill(skillInput)}
+              disabled={!skillInput.trim()}
+              id="add-skill-btn"
+            >
+              Add
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Press <kbd className="rounded bg-muted px-1 text-[10px]">Enter</kbd> or{" "}
+            <kbd className="rounded bg-muted px-1 text-[10px]">,</kbd> to add. Click the × to remove.
+          </p>
         </CardContent>
       </Card>
 
