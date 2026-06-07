@@ -43,16 +43,17 @@ function PdfViewer({ reportId }: { reportId: number }) {
 
   useEffect(() => {
     let objectUrl: string | null = null;
-    setLoading(true);
-    setError(false);
 
     fetchReportPdfBlob(reportId)
       .then((url) => {
         objectUrl = url;
         setBlobUrl(url);
+        setLoading(false);
       })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
 
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -232,7 +233,7 @@ export function ReportDetailDialog({ report, open, onClose }: ReportDetailDialog
                   Download
                 </Button>
               </div>
-              <PdfViewer reportId={detail.id} />
+              <PdfViewer key={detail.id} reportId={detail.id} />
             </div>
           </div>
         )}
