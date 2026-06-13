@@ -8,14 +8,13 @@ const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY || "";
 export const useChatClient = () => {
   const [chatClient, setChatClient] = useState<StreamChat | null>(null);
   const { user } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    !apiKey ? "Chat is not configured (missing API key)." : null
+  );
 
   useEffect(() => {
     if (!user) return;
-    if (!apiKey) {
-      setError("Chat is not configured (missing API key).");
-      return;
-    }
+    if (!apiKey) return;
 
     let client: StreamChat;
     let isMounted = true;
