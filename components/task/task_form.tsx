@@ -236,7 +236,7 @@ export function TaskForm({ taskId }: TaskFormProps) {
 
   return (
     <Frame>
-      <FramePanel>
+      <FramePanel className="overflow-y-auto">
         <form
           onSubmit={handleSubmit(onSubmit as (data: Record<string, unknown>) => void)}
           className="flex flex-col gap-6"
