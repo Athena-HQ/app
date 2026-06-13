@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -173,6 +173,7 @@ function buildInitialSocials(raw: CurrentAppUser["raw"]): SocialLink[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ProfileTab({ appUser }: ProfileTabProps) {
+  const queryClient = useQueryClient();
   const rawProfile = appUser.raw.profile;
 
   const [socials, setSocials] = useState<SocialLink[]>(() =>
@@ -290,6 +291,7 @@ export function ProfileTab({ appUser }: ProfileTabProps) {
       reset(values);
       setSocialsDirty(false);
       setSkillsDirty(false);
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save profile. Make sure URLs are valid.");
     }

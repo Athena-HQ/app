@@ -175,14 +175,14 @@ export function SubtaskForm({ parentTaskId, parentAssigneeNames }: SubtaskFormPr
           Add Subtask
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="sm:max-w-[540px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Create Subtask</DialogTitle>
           <DialogDescription>
             Add a subtask to break down this task into smaller pieces.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="subtask-title">Title *</Label>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -5,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   TASK_STATUSES,
@@ -39,6 +41,16 @@ export function TaskFiltersComponent({
   filters,
   onFiltersChange,
 }: TaskFiltersProps) {
+  const [searchInput, setSearchInput] = useState(filters.search ?? "");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onFiltersChange({ ...filters, search: searchInput || undefined });
+    }, 300);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
   const updateFilter = <K extends keyof TaskFilters>(
     key: K,
     value: TaskFilters[K] | undefined
@@ -47,7 +59,17 @@ export function TaskFiltersComponent({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="flex flex-col gap-4">
+      <div>
+        <Label>Search by title</Label>
+        <Input
+          className="mt-2"
+          placeholder="Search tasks..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="flex flex-col gap-2">
         <Label>Status</Label>
         <Select
@@ -97,6 +119,7 @@ export function TaskFiltersComponent({
           </SelectContent>
         </Select>
       </div>
+    </div>
     </div>
   );
 }

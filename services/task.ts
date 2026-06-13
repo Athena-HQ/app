@@ -103,6 +103,7 @@ export interface TaskFilters {
   assigned_to?: number;
   squad?: number;
   assigned_by?: number;
+  search?: string;
 }
 
 export interface DashboardStatsResponse {
@@ -121,6 +122,7 @@ function buildQueryString(filters: TaskFilters): string {
   if (filters.assigned_to != null) params.set("assigned_to", String(filters.assigned_to));
   if (filters.squad != null) params.set("squad", String(filters.squad));
   if (filters.assigned_by != null) params.set("assigned_by", String(filters.assigned_by));
+  if (filters.search) params.set("search", filters.search);
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }

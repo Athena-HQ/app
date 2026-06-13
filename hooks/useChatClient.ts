@@ -11,7 +11,11 @@ export const useChatClient = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || !apiKey) return;
+    if (!user) return;
+    if (!apiKey) {
+      setError("Chat is not configured (missing API key).");
+      return;
+    }
 
     let client: StreamChat;
     let isMounted = true;

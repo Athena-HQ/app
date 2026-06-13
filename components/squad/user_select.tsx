@@ -139,15 +139,6 @@ export function UserSelect({ value, onChange }: UserSelectProps) {
           </Command>
         </PopoverContent>
       </Popover>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="h-14 px-4 border-accent/30 hover:border-accent hover:bg-accent/5 text-foreground/80 hover:text-foreground"
-      >
-        <Sparkles className="w-4 h-4 mr-2 text-accent-foreground" />
-        AI Recommend
-      </Button>
     </div>
   );
 }
