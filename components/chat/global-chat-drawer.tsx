@@ -20,27 +20,147 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/auth-context";
 import { useChatDrawer } from "@/contexts/chat-drawer-context";
 import { RiTeamLine, RiMessage3Line, RiAddLine, RiChat3Line, RiArrowLeftSLine } from "@remixicon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getEmployees, type AppUserResponse } from "@/services/company";
 
-function CustomListHeader({ 
-  activeTab, 
-  setActiveTab 
-}: { 
-  activeTab: "team" | "messaging"; 
-  setActiveTab: (tab: "team" | "messaging") => void; 
+// Inline "new message" panel — slides over the channel list inside the sheet
+// itself (instead of an external dialog) so the chat context stays visible.
+function InlineNewDm({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
+  const { client, setActiveChannel } = useChatContext();
+  const [creating, setCreating] = useState(false);
+
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: getEmployees,
+  });
+
+  const teammates = useMemo(
+    () => employees.filter((e) => e.user_id !== user?.pk),
+    [employees, user?.pk],
+  );
+
+  const startDm = async (employee: AppUserResponse) => {
+    if (!client || !user || creating) return;
+    setCreating(true);
+    try {
+      // Create (or reuse) the 1-1 channel and open it. Selecting the channel
+      // flips the sheet to the conversation view via ChannelSelectInterceptor.
+      const channel = client.channel("messaging", {
+        members: [String(user.pk), String(employee.user_id)],
+      });
+      await channel.watch();
+      setActiveChannel(channel);
+      onClose();
+    } catch (e) {
+      console.error("Failed to start DM", e);
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col bg-card animate-in fade-in slide-in-from-right-4 duration-200 ease-out">
+      <div className="p-4 border-b shrink-0 flex items-center gap-2 pr-12">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="shrink-0 rounded-full"
+          aria-label="Back to conversations"
+        >
+          <RiArrowLeftSLine size={24} />
+        </Button>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold font-serif italic text-foreground leading-tight">
+            New message
+          </h2>
+          <p className="text-xs text-muted-foreground">Pick a teammate to start chatting</p>
+        </div>
+      </div>
+      <Command className="bg-transparent flex-1 min-h-0 px-2">
+        <CommandInput placeholder="Search teammates by name or role…" />
+        <CommandList className="flex-1">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              Loading teammates…
+            </div>
+          ) : (
+            <>
+              <CommandEmpty>No teammates found.</CommandEmpty>
+              <CommandGroup heading="Teammates">
+                {teammates.map((employee) => {
+                  const name =
+                    [employee.first_name, employee.last_name]
+                      .filter(Boolean)
+                      .join(" ")
+                      .trim() || employee.email;
+                  const initial = name.charAt(0).toUpperCase();
+                  return (
+                    <CommandItem
+                      key={employee.id}
+                      value={`${name} ${employee.role ?? ""}`}
+                      onSelect={() => startDm(employee)}
+                      className="flex cursor-pointer items-center gap-3"
+                    >
+                      <Avatar className="h-8 w-8 border border-border">
+                        {employee.profile?.avatar_url && (
+                          <AvatarImage src={employee.profile.avatar_url} alt={name} />
+                        )}
+                        <AvatarFallback className="text-xs">{initial}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium">{name}</span>
+                        {employee.role && (
+                          <span className="truncate text-xs capitalize text-muted-foreground">
+                            {employee.role}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </>
+          )}
+        </CommandList>
+      </Command>
+    </div>
+  );
+}
+
+function CustomListHeader({
+  activeTab,
+  setActiveTab,
+  onNewDm,
+}: {
+  activeTab: "team" | "messaging";
+  setActiveTab: (tab: "team" | "messaging") => void;
+  onNewDm: () => void;
 }) {
   return (
     <div className="p-4 border-b shrink-0">
-      <div className="flex items-center justify-between mb-4">
+      {/* pr-12 reserves room for the Sheet's absolute close (X) button so the
+          "new message" action never sits underneath it. */}
+      <div className="flex items-center justify-between mb-4 pr-12">
         <h1 className="text-xl font-bold font-serif italic text-foreground">Messages</h1>
         {activeTab === "messaging" && (
-          <button 
+          <button
             className="p-2 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
             title="Start new DM"
-            onClick={() => {
-              alert("Starting new 1-1 chat will open user search modal.");
-            }}
+            aria-label="Start new direct message"
+            onClick={onNewDm}
           >
             <RiAddLine size={18} />
           </button>
@@ -103,6 +223,7 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
   });
   
   const [channelViewActive, setChannelViewActive] = useState(false);
+  const [newDmActive, setNewDmActive] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -161,7 +282,11 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
           
           {/* Channel List View */}
           <div className={`absolute inset-0 flex flex-col bg-card transition-transform duration-300 ${channelViewActive ? '-translate-x-full' : 'translate-x-0'}`}>
-            <CustomListHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+            <CustomListHeader
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onNewDm={() => setNewDmActive(true)}
+            />
             <div className="flex-1 overflow-y-auto">
               <ChannelList
                 key={activeTab}
@@ -172,6 +297,8 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
               />
             </div>
             <ChannelSelectInterceptor setChannelViewActive={setChannelViewActive} />
+            {/* Inline new-message search — lives inside the sheet, over the list */}
+            {newDmActive && <InlineNewDm onClose={() => setNewDmActive(false)} />}
           </div>
 
           {/* Active Channel View */}
