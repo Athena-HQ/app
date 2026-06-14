@@ -1,8 +1,12 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { getEmployees } from "@/services/company";
 
 interface SquadPreviewProps {
   values: {
@@ -16,6 +20,21 @@ interface SquadPreviewProps {
 
 export function SquadPreview({ values, roleColors }: SquadPreviewProps) {
   const { squadName, techStack, roles } = values;
+
+  // Resolve the selected squad leader to a real employee (shares the
+  // ["employees"] cache populated by UserSelect, so this is instant).
+  const { data: employees = [], isLoading: leaderLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: getEmployees,
+  });
+  const leader = values.squadLeader
+    ? employees.find((e) => String(e.id) === values.squadLeader)
+    : undefined;
+  const leaderName = leader
+    ? [leader.first_name, leader.last_name].filter(Boolean).join(" ").trim() ||
+      leader.email
+    : "";
+  const leaderInitial = (leaderName || "L").charAt(0).toUpperCase();
 
   const totalMembers = Object.values(roles).reduce((a, b) => a + b, 0) + (values.squadLeader ? 1 : 0);
 
@@ -118,13 +137,23 @@ export function SquadPreview({ values, roleColors }: SquadPreviewProps) {
           {values.squadLeader && (
             <div className="bg-muted/30 p-3 rounded-xl flex items-center gap-3 border border-border/50">
               <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                {/* Mocking the user image since we only have ID in props - in real app we'd look it up */}
-                <AvatarImage src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop&crop=faces" />
-                <AvatarFallback>L</AvatarFallback>
+                {leader?.profile?.avatar_url && (
+                  <AvatarImage src={leader.profile.avatar_url} alt={leaderName} />
+                )}
+                <AvatarFallback>{leaderInitial}</AvatarFallback>
               </Avatar>
               <div>
                 <div className="text-xs text-foreground/70 uppercase font-semibold tracking-wide">Squad Lead</div>
-                <div className="font-medium text-foreground">John Wick</div>
+                <div className="font-medium text-foreground">
+                  {leaderName || (
+                    <span className="text-muted-foreground/50 italic">
+                      {leaderLoading ? "Loading…" : "Selected lead"}
+                    </span>
+                  )}
+                </div>
+                {leader?.role && (
+                  <div className="text-xs text-muted-foreground capitalize">{leader.role}</div>
+                )}
               </div>
             </div>
           )}
