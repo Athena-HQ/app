@@ -3,11 +3,21 @@ import type { AppUserResponse } from "./company";
 
 // ─── Detail Response (from AppUserDetailSerializer) ─────────────────────────
 
+export interface EarnedBadge {
+  id: number;
+  name: string;
+  description: string;
+  badge_type: string;
+  icon: string;
+  earned_at: string;
+}
+
 export interface EmployeeDetailResponse extends AppUserResponse {
   task_count: number;
   completed_task_count: number;
   average_rating: number | null;
   badge_count: number;
+  badges: EarnedBadge[];
   xp_info: {
     total_xp: number;
     level: number;
@@ -59,8 +69,13 @@ export async function updateMyProfile(data: ProfileUpdateRequest): Promise<Profi
   return api.patch<ProfileResponse>("/authentication/profile/", data);
 }
 
+export async function changeEmployeeRole(employeeId: number, role: string): Promise<void> {
+  await api.patch(`/authentication/employees/${employeeId}/change-role/`, { role });
+}
+
 export const employeeService = {
   getEmployeeDetail,
   getMyProfile,
   updateMyProfile,
+  changeEmployeeRole,
 };

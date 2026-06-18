@@ -50,7 +50,12 @@ function mapToEmployeeProfile(
       levelNumber: data.xp_info?.level ?? 0,
       currentXp: data.xp_info?.total_xp ?? 0,
       xpToNextLevel: data.xp_info ? getXpToNextLevel(data.xp_info.total_xp) : 100,
-      badges: [],
+      badges: (data.badges ?? []).map((b) => ({
+        id: String(b.id),
+        name: b.name,
+        description: b.description,
+        unlockedAt: b.earned_at,
+      })),
     },
     taskAnalytics: {
       totalTasksCompleted: data.completed_task_count ?? 0,
