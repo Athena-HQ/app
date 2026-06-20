@@ -160,7 +160,6 @@ function InlineNewSquadChat({ onClose }: { onClose: () => void }) {
         .map((m) => String(m.app_user.user_id))
         .filter(Boolean);
       const channel = client.channel("team", `squad-${squad.id}`, {
-        name: squad.name,
         members: memberIds,
       });
       await channel.watch();
