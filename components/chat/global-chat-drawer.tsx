@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getEmployees, type AppUserResponse } from "@/services/company";
+import { getMySquads, getSquad, type SquadListResponse } from "@/services/squad";
 
 // Inline "new message" panel — slides over the channel list inside the sheet
 // itself (instead of an external dialog) so the chat context stays visible.
@@ -140,14 +141,97 @@ function InlineNewDm({ onClose }: { onClose: () => void }) {
   );
 }
 
+function InlineNewSquadChat({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
+  const { client, setActiveChannel } = useChatContext();
+  const [creating, setCreating] = useState(false);
+
+  const { data: squads = [], isLoading } = useQuery({
+    queryKey: ["my-squads"],
+    queryFn: getMySquads,
+  });
+
+  const startSquadChat = async (squad: SquadListResponse) => {
+    if (!client || !user || creating) return;
+    setCreating(true);
+    try {
+      const fullSquad = await getSquad(squad.id);
+      const memberIds = fullSquad.members
+        .map((m) => String(m.app_user.user_id))
+        .filter(Boolean);
+      const channel = client.channel("team", `squad-${squad.id}`, {
+        members: memberIds,
+      });
+      await channel.watch();
+      setActiveChannel(channel);
+      onClose();
+    } catch (e) {
+      console.error("Failed to start squad chat", e);
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col bg-card animate-in fade-in slide-in-from-right-4 duration-200 ease-out">
+      <div className="p-4 border-b shrink-0 flex items-center gap-2 pr-12">
+        <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 rounded-full" aria-label="Back">
+          <RiArrowLeftSLine size={24} />
+        </Button>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold font-serif italic text-foreground leading-tight">Squad Chat</h2>
+          <p className="text-xs text-muted-foreground">Pick a squad to open its channel</p>
+        </div>
+      </div>
+      <Command className="bg-transparent flex-1 min-h-0 px-2">
+        <CommandInput placeholder="Search squads…" />
+        <CommandList className="flex-1">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              Loading squads…
+            </div>
+          ) : (
+            <>
+              <CommandEmpty>No squads found.</CommandEmpty>
+              <CommandGroup heading="Your squads">
+                {squads.map((squad) => (
+                  <CommandItem
+                    key={squad.id}
+                    value={squad.name}
+                    onSelect={() => startSquadChat(squad)}
+                    disabled={creating}
+                    className="flex cursor-pointer items-center gap-3"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/50 text-xs font-semibold">
+                      {squad.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium">{squad.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {squad.member_count} member{squad.member_count !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          )}
+        </CommandList>
+      </Command>
+    </div>
+  );
+}
+
 function CustomListHeader({
   activeTab,
   setActiveTab,
   onNewDm,
+  onNewSquad,
 }: {
   activeTab: "team" | "messaging";
   setActiveTab: (tab: "team" | "messaging") => void;
   onNewDm: () => void;
+  onNewSquad: () => void;
 }) {
   return (
     <div className="p-4 border-b shrink-0">
@@ -161,6 +245,16 @@ function CustomListHeader({
             title="Start new DM"
             aria-label="Start new direct message"
             onClick={onNewDm}
+          >
+            <RiAddLine size={18} />
+          </button>
+        )}
+        {activeTab === "team" && (
+          <button
+            className="p-2 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+            title="Open squad chat"
+            aria-label="Open squad chat"
+            onClick={onNewSquad}
           >
             <RiAddLine size={18} />
           </button>
@@ -224,6 +318,7 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
   
   const [channelViewActive, setChannelViewActive] = useState(false);
   const [newDmActive, setNewDmActive] = useState(false);
+  const [newSquadActive, setNewSquadActive] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -286,6 +381,7 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               onNewDm={() => setNewDmActive(true)}
+              onNewSquad={() => setNewSquadActive(true)}
             />
             <div className="flex-1 overflow-y-auto">
               <ChannelList
@@ -299,6 +395,7 @@ function ChatContent({ client, error }: { client: StreamChat | null; error: stri
             <ChannelSelectInterceptor setChannelViewActive={setChannelViewActive} />
             {/* Inline new-message search — lives inside the sheet, over the list */}
             {newDmActive && <InlineNewDm onClose={() => setNewDmActive(false)} />}
+            {newSquadActive && <InlineNewSquadChat onClose={() => setNewSquadActive(false)} />}
           </div>
 
           {/* Active Channel View */}

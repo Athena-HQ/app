@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await logoutMutation.mutateAsync();
+    window.location.href = "/login";
   };
 
   const value: AuthContextType = {
