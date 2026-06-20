@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getEmployees, type AppUserResponse } from "@/services/company";
-import { getMySquads, getSquad, type SquadListResponse } from "@/services/squad";
+import { listSquads, getSquad, type SquadListResponse } from "@/services/squad";
 
 // Inline "new message" panel — slides over the channel list inside the sheet
 // itself (instead of an external dialog) so the chat context stays visible.
@@ -147,8 +147,8 @@ function InlineNewSquadChat({ onClose }: { onClose: () => void }) {
   const [creating, setCreating] = useState(false);
 
   const { data: squads = [], isLoading } = useQuery({
-    queryKey: ["my-squads"],
-    queryFn: getMySquads,
+    queryKey: ["squads"],
+    queryFn: listSquads,
   });
 
   const startSquadChat = async (squad: SquadListResponse) => {

@@ -8,6 +8,7 @@ export interface EmployeeProfile {
   status: string;
   email?: string;
   bio?: string;
+  skills?: string[];
   socialLinks?: {
     github?: string;
     linkedin?: string;
