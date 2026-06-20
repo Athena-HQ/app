@@ -40,6 +40,7 @@ function mapToEmployeeProfile(
     status: "active",
     email: data.email,
     bio: data.profile?.bio,
+    skills: data.profile?.skills ?? [],
     socialLinks: {
       github: data.profile?.github ?? undefined,
       linkedin: data.profile?.linkedin ?? undefined,

@@ -106,6 +106,19 @@ export function ProfileHeader({ employee }: ProfileHeaderProps) {
                                 {employee.bio}
                             </p>
                         )}
+
+                        {employee.skills && employee.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {employee.skills.map((sk) => (
+                                    <span
+                                        key={sk}
+                                        className="inline-flex items-center px-2.5 py-1 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30 text-xs font-medium"
+                                    >
+                                        {sk}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </CardContent>
