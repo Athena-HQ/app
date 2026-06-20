@@ -23,7 +23,7 @@ import type { AppUserResponse } from "@/services/company";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { useChatDrawer } from "@/contexts/chat-drawer-context";
-import { RiMessage3Line } from "@remixicon/react";
+import { RiMessage3Line, RiUserSettingsLine } from "@remixicon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { changeEmployeeRole } from "@/services/employee";
@@ -120,33 +120,33 @@ export function CompanyMemberCard({
           </CardContent>
         </Link>
 
-        {user && user.pk !== employee.user_id && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
-            onClick={handleChatClick}
-            title={`Chat with ${employee.first_name}`}
-          >
-            <RiMessage3Line size={18} />
-          </Button>
-        )}
-
-        {showChangeRole && (
-          <div className="px-4 pb-3">
+        <div className="absolute top-2 right-2 flex items-center gap-0.5">
+          {showChangeRole && (
             <Button
-              size="sm"
-              variant="outline"
-              className="w-full text-xs h-7"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
               onClick={() => {
                 setSelectedRole(employee.role ?? "");
                 setDialogOpen(true);
               }}
+              title="Change role"
             >
-              Change Role
+              <RiUserSettingsLine size={18} />
             </Button>
-          </div>
-        )}
+          )}
+          {user && user.pk !== employee.user_id && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+              onClick={handleChatClick}
+              title={`Chat with ${employee.first_name}`}
+            >
+              <RiMessage3Line size={18} />
+            </Button>
+          )}
+        </div>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
